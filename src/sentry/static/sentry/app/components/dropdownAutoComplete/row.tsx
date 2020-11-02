@@ -34,9 +34,7 @@ const Row = ({
 
   if (item?.groupLabel) {
     return (
-      <LabelWithBorder style={style}>
-        {item.label && <GroupLabel>{item.label}</GroupLabel>}
-      </LabelWithBorder>
+      <Label style={style}>{item.label && <GroupLabel>{item.label}</GroupLabel>}</Label>
     );
   }
 
@@ -53,19 +51,10 @@ const Row = ({
 
 export default Row;
 
-const LabelWithBorder = styled('div')`
+const Label = styled('div')`
   background-color: ${p => p.theme.gray100};
-  border-bottom: 1px solid ${p => p.theme.innerBorder};
-  border-width: 1px 0;
   color: ${p => p.theme.gray600};
   font-size: ${p => p.theme.fontSizeMedium};
-
-  :first-child {
-    border-top: none;
-  }
-  :last-child {
-    border-bottom: none;
-  }
 `;
 
 const GroupLabel = styled('div')`
@@ -92,16 +81,11 @@ const AutoCompleteItem = styled('div')<{hasGrayBackground: boolean; itemSize?: I
   justify-content: center;
 
   font-size: 0.9em;
-  background-color: ${p => (p.hasGrayBackground ? p.theme.gray100 : 'transparent')};
+  background-color: ${p => (p.hasGrayBackground ? p.theme.focus : 'transparent')};
   padding: ${p => getItemPaddingForSize(p.itemSize)};
   cursor: pointer;
-  border-bottom: 1px solid ${p => p.theme.innerBorder};
-
-  :last-child {
-    border-bottom: none;
-  }
 
   :hover {
-    background-color: ${p => p.theme.gray100};
+    background-color: ${p => p.theme.focus};
   }
 `;

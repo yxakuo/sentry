@@ -126,6 +126,11 @@ const aliases = {
   inactive: colors.gray300,
 
   /**
+   * Indicates that something is "focused", such as in a dropdown
+   */
+  focus: colors.purple100,
+
+  /**
    * Link color indicates that something is clickable
    */
   linkColor: colors.purple300,

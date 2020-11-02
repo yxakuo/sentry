@@ -98,7 +98,7 @@ const defaultStyles = {
       ? theme.white
       : theme.textColor,
     backgroundColor: state.isFocused
-      ? theme.gray200
+      ? theme.focus
       : state.isSelected
       ? theme.purple400
       : 'transparent',

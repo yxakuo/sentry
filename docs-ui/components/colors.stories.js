@@ -22,6 +22,7 @@ const DESCRIPTIONS = {
   disabled:
     'A color that indicates something is disabled where user can not interact or use it in the usual manner (implies that there is an "enabled" state)',
   active: 'Indicates that something is "active" or "selected"',
+  focus: 'Indicates that something is "focused", such as in a dropdown',
   linkColor: 'Link color indicates that something is clickable',
   secondaryButton: '...',
   sidebarGradient: 'Gradient for sidebar',
