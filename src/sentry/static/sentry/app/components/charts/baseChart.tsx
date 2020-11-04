@@ -38,14 +38,13 @@ type ReactEchartProps = React.ComponentProps<typeof ReactEchartsCore>;
 type ReactEChartOpts = NonNullable<ReactEchartProps['opts']>;
 
 /**
- * Used for some properties that can be truncated
+ * Used for soem properties that can be truncated
  */
 type Truncateable = {
   /**
-   * Truncate the label / value some number of characters.
-   * If true is passed, it will use truncate based on a default length.
+   * Truncate the label / value some number of characters
    */
-  truncate?: number | boolean;
+  truncate?: number;
 };
 
 type Props = {
@@ -65,7 +64,7 @@ type Props = {
    *
    * Additionally a `truncate` option
    */
-  xAxis?: (EChartOption.XAxis & Truncateable) | null;
+  xAxis?: EChartOption.XAxis & Truncateable;
   /**
    * Must be explicitly `null` to disable yAxis
    */
@@ -85,7 +84,7 @@ type Props = {
    */
   tooltip?: EChartOption.Tooltip &
     Truncateable & {
-      filter?: (value: number) => boolean;
+      filter?: (value: number) => number;
       formatAxisLabel?: (
         value: number,
         isTimestamp: boolean,
