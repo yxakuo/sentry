@@ -46,6 +46,7 @@ import {
   DEFAULT_TRENDS_STATS_PERIOD,
   DEFAULT_MAX_DURATION,
 } from './trends/utils';
+import VitalsCards from './vitals-cards';
 
 export enum FilterViews {
   ALL_TRANSACTIONS = 'ALL_TRANSACTIONS',
@@ -358,6 +359,11 @@ class PerformanceLanding extends React.Component<Props, State> {
                       ['epm()', 'eps()']
                     )}
                     onSearch={this.handleSearch}
+                  />
+                  <VitalsCards
+                    eventView={eventView}
+                    organization={organization}
+                    location={location}
                   />
                   <Charts
                     eventView={eventView}
