@@ -8,7 +8,7 @@ import {decodeScalar} from 'app/utils/queryString';
 
 import {getPerformanceLandingUrl} from './utils';
 import {transactionSummaryRouteWithQuery} from './transactionSummary/utils';
-import {vitalsRouteWithQuery} from './transactionVitals/utils';
+import {vitalDetailRouteWithQuery, vitalsRouteWithQuery} from './transactionVitals/utils';
 
 type Props = {
   organization: Organization;
@@ -49,9 +49,15 @@ class Breadcrumb extends React.Component<Props> {
     });
 
     if (vitalName) {
+      const rumTarget = vitalDetailRouteWithQuery({
+        orgSlug: organization.slug,
+        vitalName: 'fcp',
+        projectID: decodeScalar(location.query.project),
+        query: location.query,
+      });
       crumbs.push({
         to: rumTarget,
-        label: t('Web Vitals'),
+        label: t('Vital Detail'),
         preserveGlobalSelection: true,
       });
     } else if (transactionName) {

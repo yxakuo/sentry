@@ -1,6 +1,6 @@
 import React from 'react';
 import {Params} from 'react-router/lib/Router';
-import {browserHistory} from 'react-router';
+import {browserHistory, InjectedRouter} from 'react-router';
 import {Location} from 'history';
 import styled from '@emotion/styled';
 import isEqual from 'lodash/isEqual';
@@ -33,6 +33,7 @@ import {
   VITAL_GROUPS,
 } from '../transactionVitals/constants';
 import VitalDetailContent from './vitalDetailContent';
+import {generatePerformanceVitalDetailView} from '../data';
 
 type Props = {
   api: Client;
@@ -42,6 +43,7 @@ type Props = {
   projects: Project[];
   selection: GlobalSelection;
   loadingProjects: boolean;
+  router: InjectedRouter;
 };
 
 type State = {
@@ -52,20 +54,20 @@ type State = {
 // as React.ReactText
 type TotalValues = Record<string, number>;
 
-class TransactionSummary extends React.Component<Props, State> {
+class VitalDetail extends React.Component<Props, State> {
   state: State = {
-    eventView: generateSummaryEventView(
-      this.props.location,
-      getTransactionName(this.props.location)
+    eventView: generatePerformanceVitalDetailView(
+      this.props.organization,
+      this.props.location
     ),
   };
 
   static getDerivedStateFromProps(nextProps: Props, prevState: State): State {
     return {
       ...prevState,
-      eventView: generateSummaryEventView(
-        nextProps.location,
-        getTransactionName(nextProps.location)
+      eventView: generatePerformanceVitalDetailView(
+        nextProps.organization,
+        nextProps.location
       ),
     };
   }
@@ -150,7 +152,7 @@ class TransactionSummary extends React.Component<Props, State> {
   }
 
   render() {
-    const {organization, location} = this.props;
+    const {organization, location, router} = this.props;
     const {eventView} = this.state;
     const transactionName = getTransactionName(location);
     if (!eventView || transactionName === undefined) {
@@ -165,6 +167,12 @@ class TransactionSummary extends React.Component<Props, State> {
       return null;
     }
 
+    const vitalNameQuery = decodeScalar(location.query.vitalName);
+    const vitalName =
+      Object.values(WebVital).indexOf(vitalNameQuery as WebVital) === -1
+        ? undefined
+        : (vitalNameQuery as WebVital);
+
     return (
       <SentryDocumentTitle title={this.getDocumentTitle()} objSlug={organization.slug}>
         <GlobalSelectionHeader>
@@ -174,6 +182,8 @@ class TransactionSummary extends React.Component<Props, State> {
                 location={location}
                 organization={organization}
                 eventView={eventView}
+                router={router}
+                vitalName={vitalName || WebVital.FID}
               />
             </LightWeightNoProjectMessage>
           </StyledPageContent>
@@ -187,51 +197,4 @@ const StyledPageContent = styled(PageContent)`
   padding: 0;
 `;
 
-function generateSummaryEventView(
-  location: Location,
-  transactionName: string | undefined
-): EventView | undefined {
-  if (transactionName === undefined) {
-    return undefined;
-  }
-  // Use the user supplied query but overwrite any transaction or event type
-  // conditions they applied.
-  const query = decodeScalar(location.query.query) || '';
-  const conditions = tokenizeSearch(query);
-  conditions
-    .setTagValues('event.type', ['transaction'])
-    .setTagValues('transaction', [transactionName]);
-
-  Object.keys(conditions.tagValues).forEach(field => {
-    if (isAggregateField(field)) conditions.removeTag(field);
-  });
-
-  // Handle duration filters from the latency chart
-  if (location.query.startDuration || location.query.endDuration) {
-    conditions.setTagValues(
-      'transaction.duration',
-      [
-        decodeScalar(location.query.startDuration),
-        decodeScalar(location.query.endDuration),
-      ]
-        .filter(item => item)
-        .map((item, index) => (index === 0 ? `>${item}` : `<${item}`))
-    );
-  }
-
-  return EventView.fromNewQueryWithLocation(
-    {
-      id: undefined,
-      version: 2,
-      name: transactionName,
-      fields: ['id', 'user.display', 'transaction.duration', 'timestamp'],
-      query: stringifyQueryObject(conditions),
-      projects: [],
-    },
-    location
-  );
-}
-
-export default withApi(
-  withGlobalSelection(withProjects(withOrganization(TransactionSummary)))
-);
+export default withApi(withGlobalSelection(withProjects(withOrganization(VitalDetail))));

@@ -42,12 +42,12 @@ export function vitalsRouteWithQuery({
 
 export function vitalDetailRouteWithQuery({
   orgSlug,
-  transaction,
+  vitalName,
   projectID,
   query,
 }: {
   orgSlug: string;
-  transaction: string;
+  vitalName: string;
   query: Query;
   projectID?: string | string[];
 }) {
@@ -58,7 +58,7 @@ export function vitalDetailRouteWithQuery({
   return {
     pathname,
     query: {
-      transaction,
+      vitalName,
       project: projectID,
       environment: query.environment,
       statsPeriod: query.statsPeriod,

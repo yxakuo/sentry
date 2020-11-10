@@ -7,7 +7,9 @@ import EventView from 'app/utils/discover/eventView';
 import {Organization} from 'app/types';
 import {Panel} from 'app/components/panels';
 import {formatPercentage} from 'app/utils/formatters';
-import VitalsCardDiscoverQuery from 'app/views/performance/vitalsCardsDiscoverQuery';
+import VitalsCardDiscoverQuery from 'app/views/performance/vitalDetail/vitalsCardsDiscoverQuery';
+import {WebVital} from 'app/utils/discover/fields';
+import {vitalAbbreviation} from './vitalDetail/utils';
 
 type Props = {
   eventView: EventView;
@@ -27,11 +29,31 @@ export default function VitalsCards(props: Props) {
       {({isLoading, tableData}) => (
         <React.Fragment>
           <VitalsContainer>
-            <VitalsCard measurement="fp" tableData={tableData} isLoading={isLoading} />
-            <VitalsCard measurement="fcp" tableData={tableData} isLoading={isLoading} />
-            <VitalsCard measurement="lcp" tableData={tableData} isLoading={isLoading} />
-            <VitalsCard measurement="fid" tableData={tableData} isLoading={isLoading} />
-            <VitalsCard measurement="cls" tableData={tableData} isLoading={isLoading} />
+            <VitalsCard
+              vitalName={WebVital.FP}
+              tableData={tableData}
+              isLoading={isLoading}
+            />
+            <VitalsCard
+              vitalName={WebVital.FCP}
+              tableData={tableData}
+              isLoading={isLoading}
+            />
+            <VitalsCard
+              vitalName={WebVital.LCP}
+              tableData={tableData}
+              isLoading={isLoading}
+            />
+            <VitalsCard
+              vitalName={WebVital.FID}
+              tableData={tableData}
+              isLoading={isLoading}
+            />
+            <VitalsCard
+              vitalName={WebVital.CLS}
+              tableData={tableData}
+              isLoading={isLoading}
+            />
           </VitalsContainer>
         </React.Fragment>
       )}
@@ -46,43 +68,14 @@ const VitalsContainer = styled('div')`
 `;
 
 type CardProps = {
-  measurement: string;
+  vitalName: WebVital;
   tableData: any;
   isLoading?: boolean;
+  noBorder?: boolean;
 };
 
-function VitalsCard(props: CardProps) {
-  const {isLoading, tableData, measurement} = props;
-
-  if (isLoading || !tableData || !tableData.data || !tableData.data[0]) {
-    return (
-      <StyledQueryCard>
-        <CardTitle>Total Passing {measurement.toUpperCase()}</CardTitle>
-        <CardValue>-</CardValue>
-      </StyledQueryCard>
-    );
-  }
-
-  const result = tableData.data[0];
-
-  const value = formatPercentage(
-    1 - parseFloat(result[`${measurement}_percentage`] || 1)
-  );
-
-  return (
-    <StyledQueryCard>
-      <CardTitle>Total Passing {measurement.toUpperCase()}</CardTitle>
-      <CardValue>{value}</CardValue>
-    </StyledQueryCard>
-  );
-}
-
-const CardTitle = styled('div')`
-  font-size: ${p => p.theme.fontSizeLarge};
-  margin-bottom: ${space(1)};
-`;
-const CardValue = styled('div')`
-  font-size: 30px;
+const NonPanel = styled('div')`
+  flex-grow: 1;
 `;
 
 const Card = styled(Panel)`
@@ -98,4 +91,42 @@ const StyledQueryCard = styled(Card)`
     position: relative;
     outline: none;
   }
+`;
+
+export function VitalsCard(props: CardProps) {
+  const {isLoading, tableData, vitalName, noBorder} = props;
+
+  const measurement = vitalAbbreviation[vitalName];
+
+  const Container = noBorder ? NonPanel : StyledQueryCard;
+
+  if (isLoading || !tableData || !tableData.data || !tableData.data[0]) {
+    return (
+      <Container>
+        <CardTitle>Total Passing {measurement}</CardTitle>
+        <CardValue>-</CardValue>
+      </Container>
+    );
+  }
+
+  const result = tableData.data[0];
+
+  const value = formatPercentage(
+    1 - parseFloat(result[`${measurement}_percentage`] || 1)
+  );
+
+  return (
+    <Container>
+      <CardTitle>Total Passing {measurement}</CardTitle>
+      <CardValue>{value}</CardValue>
+    </Container>
+  );
+}
+
+const CardTitle = styled('div')`
+  font-size: ${p => p.theme.fontSizeLarge};
+  margin-bottom: ${space(1)};
+`;
+const CardValue = styled('div')`
+  font-size: 30px;
 `;

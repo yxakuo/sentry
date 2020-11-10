@@ -1,9 +1,10 @@
 import React from 'react';
 import {Location} from 'history';
-import {browserHistory} from 'react-router';
+import {browserHistory, InjectedRouter} from 'react-router';
 import styled from '@emotion/styled';
 import omit from 'lodash/omit';
 
+import {t} from 'app/locale';
 import {Organization, Project} from 'app/types';
 import {getParams} from 'app/components/organizations/globalSelectionHeader/getParams';
 import space from 'app/styles/space';
@@ -11,27 +12,42 @@ import {generateQueryWithTag} from 'app/utils';
 import EventView from 'app/utils/discover/eventView';
 import CreateAlertButton from 'app/components/createAlertButton';
 import * as Layout from 'app/components/layouts/thirds';
-import Tags from 'app/views/eventsV2/tags';
 import SearchBar from 'app/views/events/searchBar';
 import {decodeScalar} from 'app/utils/queryString';
 import withProjects from 'app/utils/withProjects';
 import ButtonBar from 'app/components/buttonBar';
 import {WebVital} from 'app/utils/discover/fields';
+import Feature from 'app/components/acl/feature';
+import DropdownControl, {DropdownItem} from 'app/components/dropdownControl';
+import {stringifyQueryObject, tokenizeSearch} from 'app/utils/tokenizeSearch';
 
 import Breadcrumb from '../breadcrumb';
+import VitalInfo from './vitalInfo';
+import {vitalDetailOptions, vitalMap} from './utils';
+import Chart from './basicChart';
+import Table from './table';
+import {getTransactionSearchQuery} from '../utils';
 
 type Props = {
   location: Location;
   eventView: EventView;
   organization: Organization;
   projects: Project[];
+  router: InjectedRouter;
 
-  vitalName?: WebVital;
+  vitalName: WebVital;
 };
 
 type State = {
   incompatibleAlertNotice: React.ReactNode;
 };
+
+function getSummaryConditions(query: string) {
+  const parsed = tokenizeSearch(query);
+  parsed.query = [];
+
+  return stringifyQueryObject(parsed);
+}
 
 class VitalDetailContent extends React.Component<Props, State> {
   state: State = {
@@ -89,10 +105,24 @@ class VitalDetailContent extends React.Component<Props, State> {
     );
   }
 
+  setError() {
+    //
+  }
+
   render() {
-    const {location, eventView, organization, vitalName} = this.props;
+    const {location, eventView, organization, vitalName, projects, router} = this.props;
     const {incompatibleAlertNotice} = this.state;
     const query = decodeScalar(location.query.query) || '';
+
+    const options = vitalDetailOptions[vitalName];
+
+    const currentField = options?.[0].field; //TODO
+    const currentLabel = options?.[0].label; //TODO
+
+    const vital = vitalName || WebVital.FID;
+
+    const filterString = getTransactionSearchQuery(location);
+    const summaryConditions = getSummaryConditions(filterString);
 
     return (
       <React.Fragment>
@@ -101,10 +131,9 @@ class VitalDetailContent extends React.Component<Props, State> {
             <Breadcrumb
               organization={organization}
               location={location}
-              vitalName={vitalName}
-              realUserMonitoring={currentTab === Tab.RealUserMonitoring}
+              vitalName={vital}
             />
-            <Layout.Title>{transactionName}</Layout.Title>
+            <Layout.Title>{vitalMap[vital]}</Layout.Title>
           </Layout.HeaderContent>
           <Layout.HeaderActions>
             <ButtonBar gap={1}>
@@ -118,57 +147,61 @@ class VitalDetailContent extends React.Component<Props, State> {
           {incompatibleAlertNotice && (
             <Layout.Main fullWidth>{incompatibleAlertNotice}</Layout.Main>
           )}
-          <Layout.Main>
-            <StyledSearchBar
-              organization={organization}
-              projectIds={eventView.project}
-              query={query}
-              fields={eventView.fields}
-              onSearch={this.handleSearch}
-            />
-            <TransactionSummaryCharts
-              organization={organization}
-              location={location}
+          <Layout.Main fullWidth>
+            <VitalInfo
               eventView={eventView}
-              totalValues={totalCount}
-            />
-            <TransactionList
               organization={organization}
-              transactionName={transactionName}
               location={location}
+              vitalName={vital}
+            />
+
+            <StyledSearchContainer>
+              <StyledSearchBar
+                organization={organization}
+                projectIds={eventView.project}
+                query={query}
+                fields={eventView.fields}
+                onSearch={this.handleSearch}
+              />
+
+              <TrendsDropdown>
+                <DropdownControl
+                  buttonProps={{prefix: t('Display')}}
+                  label={currentLabel}
+                >
+                  {[...options].map(({label, field}) => (
+                    <DropdownItem
+                      key={field}
+                      onSelect={() => {
+                        /* TODO */
+                      }}
+                      eventKey={field}
+                      data-test-id={field}
+                      isActive={field === currentField}
+                    >
+                      {label}
+                    </DropdownItem>
+                  ))}
+                </DropdownControl>
+              </TrendsDropdown>
+            </StyledSearchContainer>
+            <Chart
               eventView={eventView}
-              slowDuration={slowDuration}
-            />
-            <RelatedIssues
               organization={organization}
               location={location}
-              transaction={transactionName}
-              start={eventView.start}
-              end={eventView.end}
-              statsPeriod={eventView.statsPeriod}
+              router={router}
+              keyTransactions={false}
+            />
+            <Table
+              eventView={eventView}
+              projects={projects}
+              organization={organization}
+              location={location}
+              keyTransactions={false}
+              setError={this.setError}
+              summaryConditions={summaryConditions}
             />
           </Layout.Main>
-          <Layout.Side>
-            <UserStats
-              organization={organization}
-              location={location}
-              totals={totalValues}
-              transactionName={transactionName}
-            />
-            <SidebarCharts organization={organization} eventView={eventView} />
-            <StatusBreakdown
-              eventView={eventView}
-              organization={organization}
-              location={location}
-            />
-            <Tags
-              generateUrl={this.generateTagUrl}
-              totalValues={totalCount}
-              eventView={eventView}
-              organization={organization}
-              location={location}
-            />
-          </Layout.Side>
         </Layout.Body>
       </React.Fragment>
     );
@@ -176,7 +209,16 @@ class VitalDetailContent extends React.Component<Props, State> {
 }
 
 const StyledSearchBar = styled(SearchBar)`
-  margin-bottom: ${space(1)};
+  flex-grow: 1;
+  margin-bottom: ${space(2)};
 `;
 
+const TrendsDropdown = styled('div')`
+  margin-left: ${space(1)};
+  flex-grow: 0;
+`;
+
+const StyledSearchContainer = styled('div')`
+  display: flex;
+`;
 export default withProjects(VitalDetailContent);

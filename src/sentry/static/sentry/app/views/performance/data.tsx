@@ -141,3 +141,49 @@ export function generatePerformanceEventView(
 
   return EventView.fromNewQueryWithLocation(savedQuery, location);
 }
+
+export function generatePerformanceVitalDetailView(
+  organization: LightWeightOrganization,
+  location: Location
+): EventView {
+  const {query} = location;
+
+  const keyTransactionsFeature = organization.features.includes('key-transactions');
+  const keyTransactionFields = keyTransactionsFeature ? ['key_transaction'] : [];
+
+  const hasStartAndEnd = query.start && query.end;
+  const savedQuery: NewQuery = {
+    id: undefined,
+    name: t('Performance'),
+    query: 'event.type:transaction',
+    projects: [],
+    fields: [
+      ...keyTransactionFields,
+      'transaction',
+      'project',
+      'count_unique(user)',
+      'count()',
+      'p75(measurements.lcp)',
+    ],
+    version: 2,
+  };
+
+  if (!query.statsPeriod && !hasStartAndEnd) {
+    savedQuery.range = DEFAULT_STATS_PERIOD;
+  }
+  savedQuery.orderby = decodeScalar(query.sort) || '-count';
+
+  const searchQuery = decodeScalar(query.query) || '';
+  const conditions = tokenizeSearch(searchQuery);
+  conditions.setTagValues('event.type', ['transaction']);
+
+  // If there is a bare text search, we want to treat it as a search
+  // on the transaction name.
+  if (conditions.query.length > 0) {
+    conditions.setTagValues('transaction', [`*${conditions.query.join(' ')}*`]);
+    conditions.query = [];
+  }
+  savedQuery.query = stringifyQueryObject(conditions);
+
+  return EventView.fromNewQueryWithLocation(savedQuery, location);
+}

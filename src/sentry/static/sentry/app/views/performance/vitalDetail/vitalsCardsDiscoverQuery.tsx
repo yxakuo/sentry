@@ -15,13 +15,14 @@ export type TableData = {
   meta?: MetaType;
 };
 
-type Props = DiscoverQueryProps;
+type Props = DiscoverQueryProps & {
+  onlyVital?: string;
+};
 
-function getRequestPayload(props: DiscoverQueryProps) {
-  const {eventView} = props;
+function getRequestPayload(props: Props) {
+  const {eventView, onlyVital} = props;
   const apiPayload = eventView?.getEventsAPIPayload(props.location);
-  apiPayload.field = [
-    'count()',
+  let vitalFields = [
     'count_at_least(measurements.lcp, 4000)',
     'count_at_least(measurements.fcp, 3000)',
     'count_at_least(measurements.fp, 3000)',
@@ -33,6 +34,12 @@ function getRequestPayload(props: DiscoverQueryProps) {
     'percentage(count_at_least_measurements_fid_300, count, fid_percentage)',
     'percentage(count_at_least_measurements_cls_0_25, count, cls_percentage)',
   ];
+  if (onlyVital) {
+    vitalFields = vitalFields.filter(field =>
+      field.includes(onlyVital.replace('measurements.', ''))
+    );
+  }
+  apiPayload.field = ['count()', ...vitalFields];
   apiPayload.query = 'event.type:transaction has:measurements.lcp';
   delete apiPayload.sort;
   return apiPayload;
