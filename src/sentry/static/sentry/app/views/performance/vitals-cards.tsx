@@ -7,7 +7,7 @@ import EventView from 'app/utils/discover/eventView';
 import {Organization} from 'app/types';
 import {Panel} from 'app/components/panels';
 import {formatPercentage} from 'app/utils/formatters';
-import VitalsCardDiscoverQuery from 'app/views/performance/vitalDetail/vitalsCardsDiscoverQuery';
+import VitalsCardDiscoverQuery from 'app/views/performance/vitalDetail/vitalsCardsDiscoverQueryiscoverQuery';
 import {WebVital} from 'app/utils/discover/fields';
 import {vitalAbbreviation} from './vitalDetail/utils';
 

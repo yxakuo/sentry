@@ -1,5 +1,5 @@
 import React from 'react';
-import {withRouter} from 'react-router';
+import {withRouter, browserHistory} from 'react-router';
 import {WithRouterProps} from 'react-router/lib/withRouter';
 
 import TransparentLoadingMask from 'app/components/charts/transparentLoadingMask';
@@ -7,7 +7,7 @@ import TransitionChart from 'app/components/charts/transitionChart';
 import ReleaseSeries from 'app/components/charts/releaseSeries';
 import getDynamicText from 'app/utils/getDynamicText';
 import {getUtcToLocalDateObject} from 'app/utils/dates';
-import {decodeScalar} from 'app/utils/queryString';
+import {decodeList, decodeScalar} from 'app/utils/queryString';
 import withApi from 'app/utils/withApi';
 import {Client} from 'app/api';
 import EventView from 'app/utils/discover/eventView';
@@ -18,6 +18,13 @@ import {Series} from 'app/types/echarts';
 import theme from 'app/utils/theme';
 import {axisLabelFormatter, tooltipFormatter} from 'app/utils/discover/charts';
 
+import {
+  getCurrentTrendFunction,
+  getIntervalRatio,
+  transformEventStatsSmoothed,
+  getUnselectedSeries,
+  trendToColor,
+} from './utils';
 import {TrendChangeType, TrendsStats, NormalizedTrendsTransaction} from './types';
 
 const QUERY_KEYS = [
@@ -36,6 +43,7 @@ type Props = WithRouterProps &
     api: Client;
     location: Location;
     organization: OrganizationSummary;
+    trendChangeType: TrendChangeType;
     transaction?: NormalizedTrendsTransaction;
     isLoading: boolean;
     statsData: TrendsStats;
@@ -54,11 +62,170 @@ function transformEventStats(data: EventsStatsData, seriesName?: string): Series
   ];
 }
 
+function getLegend(trendFunction: string) {
+  const legend = {
+    right: 10,
+    top: 0,
+    itemGap: 12,
+    align: 'left',
+    textStyle: {
+      verticalAlign: 'top',
+      fontSize: 11,
+      fontFamily: 'Rubik',
+    },
+    data: [
+      {
+        name: 'Baseline',
+        icon:
+          'path://M180 1000 l0 -40 200 0 200 0 0 40 0 40 -200 0 -200 0 0 -40z, M810 1000 l0 -40 200 0 200 0 0 40 0 40 -200 0 -200 0 0 -40zm, M1440 1000 l0 -40 200 0 200 0 0 40 0 40 -200 0 -200 0 0 -40z',
+      },
+      {
+        name: 'Releases',
+        icon: 'line',
+      },
+      {
+        name: trendFunction,
+        icon: 'line',
+      },
+    ],
+  };
+  return legend;
+}
+
+function getIntervalLine(
+  series: Series[],
+  intervalRatio: number,
+  transaction?: NormalizedTrendsTransaction
+) {
+  if (!transaction || !series.length || !series[0].data || !series[0].data.length) {
+    return [];
+  }
+
+  const seriesStart = parseInt(series[0].data[0].name as string, 0);
+  const seriesEnd = parseInt(series[0].data.slice(-1)[0].name as string, 0);
+
+  if (seriesEnd < seriesStart) {
+    return [];
+  }
+
+  const periodLine = {
+    data: [] as any[],
+    color: theme.gray700,
+    markLine: {
+      data: [] as any[],
+      label: {} as any,
+      lineStyle: {
+        normal: {
+          color: theme.gray700,
+          type: 'dashed',
+          width: 1,
+        },
+      },
+      symbol: ['none', 'none'],
+      tooltip: {
+        show: false,
+      },
+    },
+    seriesName: 'Baseline',
+  };
+
+  const periodLineLabel = {
+    fontSize: 11,
+    show: true,
+  };
+
+  const previousPeriod = {
+    ...periodLine,
+    markLine: {...periodLine.markLine},
+    seriesName: 'Baseline',
+  };
+  const currentPeriod = {
+    ...periodLine,
+    markLine: {...periodLine.markLine},
+    seriesName: 'Baseline',
+  };
+  const periodDividingLine = {
+    ...periodLine,
+    markLine: {...periodLine.markLine},
+    seriesName: 'Period split',
+  };
+
+  const seriesDiff = seriesEnd - seriesStart;
+  const seriesLine = seriesDiff * (intervalRatio || 0.5) + seriesStart;
+
+  previousPeriod.markLine.data = [
+    [
+      {value: 'Past', coord: [seriesStart, transaction.aggregate_range_1]},
+      {coord: [seriesLine, transaction.aggregate_range_1]},
+    ],
+  ];
+  currentPeriod.markLine.data = [
+    [
+      {value: 'Present', coord: [seriesLine, transaction.aggregate_range_2]},
+      {coord: [seriesEnd, transaction.aggregate_range_2]},
+    ],
+  ];
+  periodDividingLine.markLine = {
+    data: [
+      {
+        value: 'Previous Period / This Period',
+        xAxis: seriesLine,
+      },
+    ],
+    label: {show: false},
+    lineStyle: {
+      normal: {
+        color: theme.gray700,
+        type: 'solid',
+        width: 2,
+      },
+    },
+    symbol: ['none', 'none'],
+    tooltip: {
+      show: false,
+    },
+  };
+
+  previousPeriod.markLine.label = {
+    ...periodLineLabel,
+    formatter: 'Past',
+    position: 'insideStartBottom',
+  };
+  currentPeriod.markLine.label = {
+    ...periodLineLabel,
+    formatter: 'Present',
+    position: 'insideEndBottom',
+  };
+
+  const additionalLineSeries = [previousPeriod, currentPeriod, periodDividingLine];
+  return additionalLineSeries;
+}
+
 class Chart extends React.Component<Props> {
+  handleLegendSelectChanged = legendChange => {
+    const {location, trendChangeType} = this.props;
+    const {selected} = legendChange;
+    const unselected = Object.keys(selected).filter(key => !selected[key]);
+
+    const query = {
+      ...location.query,
+    };
+
+    const queryKey = getUnselectedSeries(trendChangeType);
+    query[queryKey] = unselected;
+
+    const to = {
+      ...location,
+      query,
+    };
+    browserHistory.push(to);
+  };
+
   render() {
     const props = this.props;
 
     const {
+      trendChangeType,
       router,
       statsPeriod,
       project,
@@ -66,8 +233,10 @@ class Chart extends React.Component<Props> {
       transaction,
       statsData,
       isLoading,
+      location,
       projects,
     } = props;
+    const lineColor = trendToColor[trendChangeType || ''];
 
     const events =
       statsData && transaction?.project && transaction?.transaction
@@ -75,12 +244,25 @@ class Chart extends React.Component<Props> {
         : undefined;
     const data = events?.data ?? [];
 
-    const results = transformEventStats(data, 'FID (p75)');
+    const trendFunction = getCurrentTrendFunction(location);
+    const results = transformEventStats(data, trendFunction.chartLabel);
 
     const start = props.start ? getUtcToLocalDateObject(props.start) : undefined;
 
     const end = props.end ? getUtcToLocalDateObject(props.end) : undefined;
     const utc = decodeScalar(router.location.query.utc);
+
+    const intervalRatio = getIntervalRatio(router.location);
+    const seriesSelection = (
+      decodeList(location.query[getUnselectedSeries(trendChangeType)]) ?? []
+    ).reduce((selection, metric) => {
+      selection[metric] = false;
+      return selection;
+    }, {});
+    const legend = {
+      ...getLegend(trendFunction.chartLabel),
+      selected: seriesSelection,
+    };
 
     const loading = isLoading;
     const reloading = isLoading;
@@ -118,7 +300,7 @@ class Chart extends React.Component<Props> {
               ? results.map(values => {
                   return {
                     ...values,
-                    color: theme.purple500,
+                    color: lineColor.default,
                     lineStyle: {
                       opacity: 1,
                     },
@@ -144,10 +326,12 @@ class Chart extends React.Component<Props> {
                         <LineChart
                           {...zoomRenderProps}
                           {...chartOptions}
+                          onLegendSelectChanged={this.handleLegendSelectChanged}
                           series={[...series, ...releaseSeries]}
                           seriesOptions={{
                             showSymbol: false,
                           }}
+                          legend={legend}
                           toolBox={{
                             show: false,
                           }}

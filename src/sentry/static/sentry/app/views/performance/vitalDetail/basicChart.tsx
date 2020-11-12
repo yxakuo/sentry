@@ -1,27 +1,14 @@
 import React from 'react';
 import {Location} from 'history';
 import * as ReactRouter from 'react-router';
+import styled from '@emotion/styled';
 
 import {Organization} from 'app/types';
 import {Client} from 'app/api';
-import ReleaseSeries from 'app/components/charts/releaseSeries';
-import {getInterval} from 'app/components/charts/utils';
-import LoadingPanel from 'app/components/charts/loadingPanel';
-import QuestionTooltip from 'app/components/questionTooltip';
-import getDynamicText from 'app/utils/getDynamicText';
-import {getParams} from 'app/components/organizations/globalSelectionHeader/getParams';
-import {Panel} from 'app/components/panels';
-import EventView from 'app/utils/discover/eventView';
-import EventsRequest from 'app/components/charts/eventsRequest';
-import {getUtcToLocalDateObject} from 'app/utils/dates';
-import {axisLabelFormatter, tooltipFormatter} from 'app/utils/discover/charts';
-import {IconWarning} from 'app/icons';
+import withApi from 'app/utils/withApi';
 
-import {getAxisOptions} from '../data';
-import {HeaderContainer, HeaderTitle, ErrorPanel} from '../styles';
-import Chart from '../charts/chart';
-import LineChart from 'app/components/charts/lineChart';
-import ChartZoom from 'app/components/charts/chartZoom';
+import VitalChartDiscoverQuery from './vitalChartDiscoverQuery';
+import Chart from './chart';
 
 type Props = {
   api: Client;
@@ -31,6 +18,10 @@ type Props = {
   router: ReactRouter.InjectedRouter;
   keyTransactions: boolean;
 };
+
+function getChartTitle() {
+  return 'Total Passing FID (p50)';
+}
 
 class Container extends React.Component<Props> {
   getChartParameters() {
@@ -73,142 +64,41 @@ class Container extends React.Component<Props> {
       },
     };
 
+    const chartTitle = getChartTitle();
+
     return (
       <Panel>
-        <EventsRequest
-          organization={organization}
-          api={api}
-          period={globalSelection.datetime.period}
-          project={globalSelection.projects}
-          environment={globalSelection.environments}
-          start={start}
-          end={end}
-          interval={getInterval(
-            {
-              start: start || null,
-              end: end || null,
-              period: globalSelection.datetime.period,
-            },
-            true
-          )}
-          showLoading={false}
-          query={eventView.getEventsAPIPayload(location).query}
-          includePrevious={false}
-          yAxis={axisOptions.map(opt => opt.value)}
-          keyTransactions={keyTransactions}
+        <VitalChartDiscoverQuery
+          eventView={eventView}
+          orgSlug={organization.slug}
+          location={location}
+          limit={5}
         >
-              {
-                ({loading, reloading, errored, results}) => {
-                  if (errored) {
-                    return (
-                      <ErrorPanel>
-                        <IconWarning color="gray500" size="lg" />
-                      </ErrorPanel>
-                    );
-                  }
-
-    const results = transformEventStats(data, 'FID (p75)');
-
-    const start = props.start ? getUtcToLocalDateObject(props.start) : undefined;
-
-    const end = props.end ? getUtcToLocalDateObject(props.end) : undefined;
-    const utc = decodeScalar(router.location.query.utc);
-
-    const loading = isLoading;
-    const reloading = isLoading;
-
-    const transactionProject = parseInt(
-      projects.find(({slug}) => transaction?.project === slug)?.id || '',
-      10
-    );
-
-                  const series = results
-                    ? results.map(values => {
-                        return {
-                          ...values,
-                          color: theme.purple500,
-                          lineStyle: {
-                            opacity: 1,
-                          },
-                        };
-                      })
-                    : [];
-
-                  return (
-                    <React.Fragment>
-
-          <ChartZoom
-            router={router}
-            period={statsPeriod}
-            projects={project}
-            environments={environment}
-          >
-            {zoomRenderProps => {
-                <React.Fragment>
-
-              <ReleaseSeries
-                start={start}
-                end={end}
-                period={statsPeriod}
-                utc={utc}
-                projects={isNaN(transactionProject) ? project : [transactionProject]}
-                environments={environment}
-                memoized
-              >
-                {({releaseSeries}) => (
-
-                    <React.Fragment>
-
-                      <HeaderContainer>
-                        <HeaderTitle>
-                          <span>Total Passing FID (p75)</span>
-                          <QuestionTooltip
-                            position="top"
-                            size="sm"
-                            title={'Total Passing first input delay'}
-                          />
-                        </HeaderTitle>
-                      </HeaderContainer>
-                      {results ? (
-                        getDynamicText({
-                          value: (
-                            <LineChart
-                              {...zoomRenderProps}
-                              {...chartOptions}
-                              series={[...series, ...releaseSeries]}
-                              seriesOptions={{
-                                showSymbol: false,
-                              }}
-                              toolBox={{
-                                show: false,
-                              }}
-                              grid={{
-                                left: '10px',
-                                right: '10px',
-                                top: '40px',
-                                bottom: '0px',
-                              }}
-                            />
-                          ),
-                          fixed: 'apdex and throughput charts',
-                        })
-                      ) : (
-                        <LoadingPanel data-test-id="events-request-loading" />
-                      )}
-                    </React.Fragment>
-                )}
-                </ReleaseSeries>
-                    </React.Fragment>
-
-            }}
-          </ChartZoom>
-                  );
-                };
-              }
-        </EventsRequest>
+          {({isLoading, tableData, pageLinks}) => {
+            return (
+              <Chart
+                statsData={statsData}
+                query={trendView.query}
+                project={trendView.project}
+                environment={trendView.environment}
+                start={trendView.start}
+                end={trendView.end}
+                statsPeriod={trendView.statsPeriod}
+                transaction={selectedTransaction}
+                isLoading={isLoading}
+                {...props}
+              />
+            );
+          }}
+        </VitalChartDiscoverQuery>
       </Panel>
     );
   }
 }
+
+const StyledHeaderTitleLegend = styled(HeaderTitleLegend)`
+  padding: 0;
+  margin: ${space(3)};
+`;
 
 export default withApi(Container);
