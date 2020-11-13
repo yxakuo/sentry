@@ -2,7 +2,7 @@ import React from 'react';
 import {Location, LocationDescriptorObject} from 'history';
 import * as ReactRouter from 'react-router';
 
-import {IconStar} from 'app/icons';
+import {IconStar, IconUser} from 'app/icons';
 import {Organization, Project} from 'app/types';
 import Pagination from 'app/components/pagination';
 import Link from 'app/components/links/link';
@@ -18,14 +18,21 @@ import {tokenizeSearch, stringifyQueryObject} from 'app/utils/tokenizeSearch';
 import DiscoverQuery, {TableData, TableDataRow} from 'app/utils/discover/discoverQuery';
 
 import {transactionSummaryRouteWithQuery} from '../transactionSummary/utils';
+import styled from 'app/styled';
+import space from 'app/styles/space';
+import {WEB_VITAL_DETAILS} from '../transactionVitals/constants';
+import {vitalNameFromLocation} from './utils';
+import Tag from 'app/components/tagDeprecated';
+import {t} from 'app/locale';
 
 const COLUMN_TITLES = [
   'Transaction',
   'Project',
   'Unique Users',
   'Count',
+  'FID(p50)',
   'FID(p75)',
-  'Threshold',
+  'FID(p95)',
   'FID(Status)',
 ];
 
@@ -119,6 +126,23 @@ class Table extends React.Component<Props, State> {
       Actions.SHOW_GREATER_THAN,
       Actions.SHOW_LESS_THAN,
     ];
+
+    if (field === 'count_unique(user)') {
+      return (
+        <UniqueUserCell>
+          {rendered}
+          <StyledUserIcon size="20" />
+        </UniqueUserCell>
+      );
+    }
+
+    if (field === 'vitalPass') {
+      if (dataRow[field]) {
+        return <PassTag>{t('PASS')}</PassTag>;
+      } else {
+        return <FailTag>{t('FAIL')}</FailTag>;
+      }
+    }
 
     if (field === 'transaction') {
       const projectID = getProjectID(dataRow, projects);
@@ -282,7 +306,10 @@ class Table extends React.Component<Props, State> {
   render() {
     const {eventView, organization, location, keyTransactions} = this.props;
     const {widths} = this.state;
-    const columnOrder = eventView
+
+    const fakeColumnView = eventView.clone();
+    fakeColumnView.fields = [...eventView.fields, {field: 'vitalPass'}];
+    const columnOrder = fakeColumnView
       .getColumns()
       // remove key_transactions from the column order as we'll be rendering it
       // via a prepended column
@@ -296,6 +323,8 @@ class Table extends React.Component<Props, State> {
 
     const sortedEventView = this.getSortedEventView();
     const columnSortBy = sortedEventView.getSorts();
+    const vitalName = vitalNameFromLocation(location);
+    const vitalThreshold = WEB_VITAL_DETAILS[vitalName].failureThreshold;
 
     const prependColumnWidths = organization.features.includes('key-transactions')
       ? ['max-content']
@@ -314,7 +343,11 @@ class Table extends React.Component<Props, State> {
             <React.Fragment>
               <GridEditable
                 isLoading={isLoading}
-                data={tableData ? tableData.data : []}
+                data={
+                  tableData
+                    ? modifyTableData(vitalThreshold, tableData.meta, tableData.data)
+                    : []
+                }
                 columnOrder={columnOrder}
                 columnSortBy={columnSortBy}
                 grid={{
@@ -335,4 +368,40 @@ class Table extends React.Component<Props, State> {
   }
 }
 
+const modifyTableData = (threshold, meta: any, data: any[]) => {
+  meta.vitalPass = 'integer';
+  return data.map(d => {
+    const key = Object.keys(d).find(i => i.includes('p75'))!;
+    const p75 = d[key];
+    d.vitalPass = p75 < threshold ? 1 : 0;
+    return d;
+  });
+};
+
+const UniqueUserCell = styled('span')`
+  display: flex;
+  align-items: center;
+`;
+const StyledUserIcon = styled(IconUser)`
+  margin-left: ${space(1)};
+  color: ${p => p.theme.gray400};
+`;
+const FailTag = styled(Tag)`
+  position: absolute;
+  right: ${space(3)};
+  font-size: ${p => p.theme.fontSizeSmall};
+  font-weight: 600;
+  background-color: ${p => p.theme.red300};
+  color: ${p => p.theme.white};
+  text-transform: uppercase;
+`;
+const PassTag = styled(Tag)`
+  position: absolute;
+  right: ${space(3)};
+  font-size: ${p => p.theme.fontSizeSmall};
+  font-weight: 600;
+  background-color: ${p => p.theme.gray100};
+  color: ${p => p.theme.gray400};
+  text-transform: uppercase;
+`;
 export default Table;

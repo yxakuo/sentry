@@ -7,6 +7,7 @@ import {decodeScalar} from 'app/utils/queryString';
 import {tokenizeSearch, stringifyQueryObject} from 'app/utils/tokenizeSearch';
 import {WebVital} from 'app/utils/discover/fields';
 import {vitalNameFromLocation} from './vitalDetail/utils';
+import {WEB_VITAL_DETAILS} from './transactionVitals/constants';
 
 export const DEFAULT_STATS_PERIOD = '24h';
 
@@ -167,7 +168,9 @@ export function generatePerformanceVitalDetailView(
       'project',
       'count_unique(user)',
       'count()',
-      'p75(measurements.lcp)',
+      `p50(${vitalName})`,
+      `p75(${vitalName})`,
+      `p95(${vitalName})`,
     ],
     version: 2,
   };
@@ -175,7 +178,8 @@ export function generatePerformanceVitalDetailView(
   if (!query.statsPeriod && !hasStartAndEnd) {
     savedQuery.range = DEFAULT_STATS_PERIOD;
   }
-  savedQuery.orderby = decodeScalar(query.sort) || '-count';
+  // savedQuery.orderby = decodeScalar(query.sort) || `-p75_${vitalName.replace('.', '_')}`; // TODO: Remove
+  savedQuery.orderby = decodeScalar(query.sort) || `-count`;
 
   const searchQuery = decodeScalar(query.query) || '';
   const conditions = tokenizeSearch(searchQuery);
