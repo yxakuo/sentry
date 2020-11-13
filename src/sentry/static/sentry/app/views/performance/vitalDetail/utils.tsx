@@ -1,6 +1,8 @@
 import {Query} from 'history';
+import {Location} from 'history';
 
 import {WebVital} from 'app/utils/discover/fields';
+import {decodeScalar} from 'app/utils/queryString';
 
 export function generateVitalDetailRoute({orgSlug}: {orgSlug: String}): string {
   return `/organizations/${orgSlug}/performance/vitaldetail/`;
@@ -27,6 +29,18 @@ export function vitalDetailRouteWithQuery({
       query: query.query,
     },
   };
+}
+
+export function vitalNameFromLocation(location: Location): WebVital {
+  const _vitalName = decodeScalar(location.query.vitalName);
+
+  const vitalName = Object.values(WebVital).find(v => v === _vitalName);
+
+  if (vitalName) {
+    return vitalName;
+  } else {
+    return WebVital.FID;
+  }
 }
 
 export const vitalMap: Partial<Record<WebVital, string>> = {

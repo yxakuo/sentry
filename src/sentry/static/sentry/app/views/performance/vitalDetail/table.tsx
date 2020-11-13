@@ -308,6 +308,7 @@ class Table extends React.Component<Props, State> {
           orgSlug={organization.slug}
           location={location}
           keyTransactions={keyTransactions}
+          limit={10}
         >
           {({pageLinks, isLoading, tableData}) => (
             <React.Fragment>

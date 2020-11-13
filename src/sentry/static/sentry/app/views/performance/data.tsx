@@ -5,6 +5,8 @@ import {NewQuery, LightWeightOrganization, SelectValue} from 'app/types';
 import EventView from 'app/utils/discover/eventView';
 import {decodeScalar} from 'app/utils/queryString';
 import {tokenizeSearch, stringifyQueryObject} from 'app/utils/tokenizeSearch';
+import {WebVital} from 'app/utils/discover/fields';
+import {vitalNameFromLocation} from './vitalDetail/utils';
 
 export const DEFAULT_STATS_PERIOD = '24h';
 
@@ -148,6 +150,8 @@ export function generatePerformanceVitalDetailView(
 ): EventView {
   const {query} = location;
 
+  const vitalName = vitalNameFromLocation(location);
+
   const keyTransactionsFeature = organization.features.includes('key-transactions');
   const keyTransactionFields = keyTransactionsFeature ? ['key_transaction'] : [];
 
@@ -155,7 +159,7 @@ export function generatePerformanceVitalDetailView(
   const savedQuery: NewQuery = {
     id: undefined,
     name: t('Performance'),
-    query: 'event.type:transaction',
+    query: 'event.type:transaction has:measurements.lcp',
     projects: [],
     fields: [
       ...keyTransactionFields,
@@ -175,6 +179,8 @@ export function generatePerformanceVitalDetailView(
 
   const searchQuery = decodeScalar(query.query) || '';
   const conditions = tokenizeSearch(searchQuery);
+
+  conditions.setTagValues('has', [vitalName]);
   conditions.setTagValues('event.type', ['transaction']);
 
   // If there is a bare text search, we want to treat it as a search
