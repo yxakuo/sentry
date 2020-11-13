@@ -1585,6 +1585,10 @@ export type Widget = {
   };
   title: React.ReactNode;
   type: WIDGET_DISPLAY;
+  compareToPeriod: {
+    statsPeriodStart: string;
+    statsPeriodEnd: string;
+  };
   fieldLabelMap?: object;
   yAxisMapping?: [number[], number[]];
   includeReleases?: boolean;
