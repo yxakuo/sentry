@@ -51,7 +51,7 @@ export function vitalDetailRouteWithQuery({
   query: Query;
   projectID?: string | string[];
 }) {
-  const pathname = generateVitalsRoute({
+  const pathname = generateVitalDetailRoute({
     orgSlug,
   });
 

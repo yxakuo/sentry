@@ -155,7 +155,7 @@ class VitalDetail extends React.Component<Props, State> {
     const {organization, location, router} = this.props;
     const {eventView} = this.state;
     const transactionName = getTransactionName(location);
-    if (!eventView || transactionName === undefined) {
+    if (!eventView) {
       // If there is no transaction name, redirect to the Performance landing page
 
       browserHistory.replace({

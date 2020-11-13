@@ -24,7 +24,7 @@ import {stringifyQueryObject, tokenizeSearch} from 'app/utils/tokenizeSearch';
 import Breadcrumb from '../breadcrumb';
 import VitalInfo from './vitalInfo';
 import {vitalDetailOptions, vitalMap} from './utils';
-import Chart from './basicChart';
+import VitalChart from './vitalChart';
 import Table from './table';
 import {getTransactionSearchQuery} from '../utils';
 
@@ -185,12 +185,14 @@ class VitalDetailContent extends React.Component<Props, State> {
                 </DropdownControl>
               </TrendsDropdown>
             </StyledSearchContainer>
-            <Chart
-              eventView={eventView}
+            <VitalChart
               organization={organization}
-              location={location}
-              router={router}
-              keyTransactions={false}
+              query={eventView.query}
+              project={eventView.project}
+              environment={eventView.environment}
+              start={eventView.start}
+              end={eventView.end}
+              statsPeriod={eventView.statsPeriod}
             />
             <Table
               eventView={eventView}

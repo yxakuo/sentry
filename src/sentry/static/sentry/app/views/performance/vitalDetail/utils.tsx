@@ -1,4 +1,33 @@
+import {Query} from 'history';
+
 import {WebVital} from 'app/utils/discover/fields';
+
+export function generateVitalDetailRoute({orgSlug}: {orgSlug: String}): string {
+  return `/organizations/${orgSlug}/performance/vitaldetail/`;
+}
+
+export function vitalDetailRouteWithQuery({
+  orgSlug,
+  vitalName,
+  query,
+}: {
+  orgSlug: string;
+  vitalName: WebVital;
+  query: Query;
+}) {
+  const pathname = generateVitalDetailRoute({orgSlug});
+  return {
+    pathname,
+    query: {
+      vitalName,
+      environment: query.environment,
+      statsPeriod: query.statsPeriod,
+      start: query.start,
+      end: query.end,
+      query: query.query,
+    },
+  };
+}
 
 export const vitalMap: Partial<Record<WebVital, string>> = {
   [WebVital.FP]: 'First Paint',
@@ -22,7 +51,7 @@ export const vitalAbbreviation: Partial<Record<WebVital, string>> = {
   [WebVital.FCP]: 'FCP',
   [WebVital.CLS]: 'CLS',
   [WebVital.FID]: 'FID',
-  [WebVital.LCP]: 'LCPaint',
+  [WebVital.LCP]: 'LCP',
 };
 
 type VitalOption = {
@@ -33,7 +62,7 @@ type VitalOption = {
 export const vitalDetailOptions: Partial<Record<WebVital, VitalOption[]>> = {
   [WebVital.FID]: [
     {
-      label: 'Total Passing FID (p75)',
+      label: 'FID (p75)',
       field: 'p75(measurements.fid)',
     },
   ],

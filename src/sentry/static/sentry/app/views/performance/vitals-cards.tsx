@@ -7,9 +7,11 @@ import EventView from 'app/utils/discover/eventView';
 import {Organization} from 'app/types';
 import {Panel} from 'app/components/panels';
 import {formatPercentage} from 'app/utils/formatters';
-import VitalsCardDiscoverQuery from 'app/views/performance/vitalDetail/vitalsCardsDiscoverQueryiscoverQuery';
+import VitalsCardDiscoverQuery from 'app/views/performance/vitalDetail/vitalsCardsDiscoverQuery';
 import {WebVital} from 'app/utils/discover/fields';
 import {vitalAbbreviation} from './vitalDetail/utils';
+import {vitalDetailRouteWithQuery} from './transactionVitals/utils';
+import Link from 'app/components/links/link';
 
 type Props = {
   eventView: EventView;
@@ -29,30 +31,35 @@ export default function VitalsCards(props: Props) {
       {({isLoading, tableData}) => (
         <React.Fragment>
           <VitalsContainer>
-            <VitalsCard
+            <LinkedVitalsCard
               vitalName={WebVital.FP}
               tableData={tableData}
               isLoading={isLoading}
+              {...props}
             />
-            <VitalsCard
+            <LinkedVitalsCard
               vitalName={WebVital.FCP}
               tableData={tableData}
               isLoading={isLoading}
+              {...props}
             />
-            <VitalsCard
+            <LinkedVitalsCard
               vitalName={WebVital.LCP}
               tableData={tableData}
               isLoading={isLoading}
+              {...props}
             />
-            <VitalsCard
+            <LinkedVitalsCard
               vitalName={WebVital.FID}
               tableData={tableData}
               isLoading={isLoading}
+              {...props}
             />
-            <VitalsCard
+            <LinkedVitalsCard
               vitalName={WebVital.CLS}
               tableData={tableData}
               isLoading={isLoading}
+              {...props}
             />
           </VitalsContainer>
         </React.Fragment>
@@ -67,7 +74,7 @@ const VitalsContainer = styled('div')`
   gap: ${space(2)};
 `;
 
-type CardProps = {
+type CardProps = Props & {
   vitalName: WebVital;
   tableData: any;
   isLoading?: boolean;
@@ -93,6 +100,15 @@ const StyledQueryCard = styled(Card)`
   }
 `;
 
+export function LinkedVitalsCard(props: CardProps) {
+  const {vitalName} = props;
+  return (
+    <VitalLink {...props} vitalName={vitalName}>
+      <VitalsCard {...props} />
+    </VitalLink>
+  );
+}
+
 export function VitalsCard(props: CardProps) {
   const {isLoading, tableData, vitalName, noBorder} = props;
 
@@ -112,7 +128,7 @@ export function VitalsCard(props: CardProps) {
   const result = tableData.data[0];
 
   const value = formatPercentage(
-    1 - parseFloat(result[`${measurement}_percentage`] || 1)
+    1 - parseFloat(result[`${measurement?.toLowerCase()}_percentage`] || 1)
   );
 
   return (
@@ -122,6 +138,29 @@ export function VitalsCard(props: CardProps) {
     </Container>
   );
 }
+
+type VitalLinkProps = Props & {
+  vitalName: WebVital;
+  children: React.ReactNode;
+};
+
+const VitalLink = (props: VitalLinkProps) => {
+  const {organization, eventView, vitalName, children} = props;
+
+  const view = eventView.clone();
+
+  const target = vitalDetailRouteWithQuery({
+    orgSlug: organization.slug,
+    query: view.generateQueryStringObject(),
+    vitalName,
+  });
+
+  return <StyledVitalLink to={target}>{children}</StyledVitalLink>;
+};
+
+const StyledVitalLink = styled(Link)`
+  color: ${p => p.theme.textColor};
+`;
 
 const CardTitle = styled('div')`
   font-size: ${p => p.theme.fontSizeLarge};
