@@ -159,7 +159,7 @@ export function generatePerformanceVitalDetailView(
   const savedQuery: NewQuery = {
     id: undefined,
     name: t('Performance'),
-    query: 'event.type:transaction has:measurements.lcp',
+    query: 'event.type:transaction',
     projects: [],
     fields: [
       ...keyTransactionFields,

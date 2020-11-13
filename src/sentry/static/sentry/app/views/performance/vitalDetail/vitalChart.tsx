@@ -29,6 +29,9 @@ import {Panel} from 'app/components/panels';
 import {HeaderTitleLegend} from '../styles';
 import styled from 'app/styled';
 import space from 'app/styles/space';
+import {getMaxOfSeries, vitalChartTitleMap, vitalNameFromLocation} from './utils';
+import MarkLine from 'app/components/charts/components/markLine';
+import {WEB_VITAL_DETAILS} from '../transactionVitals/constants';
 
 const QUERY_KEYS = [
   'environment',
@@ -47,13 +50,6 @@ type Props = ReactRouter.WithRouterProps &
     location: Location;
     organization: OrganizationSummary;
   };
-
-const YAXIS_VALUES = [
-  'p75(measurements.fp)',
-  'p75(measurements.fcp)',
-  'p75(measurements.lcp)',
-  'p75(measurements.fid)',
-];
 
 class VitalChart extends React.Component<Props> {
   handleLegendSelectChanged = legendChange => {
@@ -90,6 +86,11 @@ class VitalChart extends React.Component<Props> {
     const end = this.props.end ? getUtcToLocalDateObject(this.props.end) : undefined;
     const utc = decodeScalar(router.location.query.utc);
 
+    const vitalName = vitalNameFromLocation(location);
+    const chartTitle = vitalChartTitleMap[vitalName];
+
+    const yAxis = [`p50(${vitalName})`, `p75(${vitalName})`];
+
     const legend = {
       right: 10,
       top: 0,
@@ -104,16 +105,6 @@ class VitalChart extends React.Component<Props> {
         fontFamily: 'Rubik',
       },
       selected: getSeriesSelection(location),
-      formatter: seriesName => {
-        const arg = getAggregateArg(seriesName);
-        if (arg !== null) {
-          const slug = getMeasurementSlug(arg);
-          if (slug !== null) {
-            seriesName = slug.toUpperCase();
-          }
-        }
-        return seriesName;
-      },
     };
 
     const datetimeSelection = {
@@ -121,6 +112,32 @@ class VitalChart extends React.Component<Props> {
       end: end || null,
       period: statsPeriod,
     };
+
+    const vitalThreshold = WEB_VITAL_DETAILS[vitalName].failureThreshold;
+
+    const markLines = [
+      {
+        seriesName: 'Threshold',
+        type: 'line',
+        data: [],
+        markLine: MarkLine({
+          silent: true,
+          lineStyle: {
+            color: theme.textColor,
+            type: 'dashed',
+            width: 1,
+          },
+          label: {
+            show: false,
+          },
+          data: [
+            {
+              yAxis: vitalThreshold,
+            } as any, // TODO(ts): date on this type is likely incomplete (needs @types/echarts@4.6.2)
+          ],
+        }),
+      },
+    ];
 
     const chartOptions = {
       grid: {
@@ -137,11 +154,12 @@ class VitalChart extends React.Component<Props> {
         valueFormatter: tooltipFormatter,
       },
       yAxis: {
+        min: 0,
+        max: vitalThreshold,
         axisLabel: {
           color: theme.chartLabel,
-          // p75(measurements.fcp) coerces the axis to be time based
-          formatter: (value: number) =>
-            axisLabelFormatter(value, 'p75(measurements.fcp)'),
+          // coerces the axis to be time based
+          formatter: (value: number) => axisLabelFormatter(value, 'p75()'),
         },
       },
     };
@@ -149,7 +167,7 @@ class VitalChart extends React.Component<Props> {
     return (
       <StyledPanel>
         <HeaderTitleLegend>
-          {t('Web Vitals Breakdown')}
+          {t(chartTitle || '')}
           <QuestionTooltip
             size="sm"
             position="top"
@@ -177,7 +195,7 @@ class VitalChart extends React.Component<Props> {
               showLoading={false}
               query={query}
               includePrevious={false}
-              yAxis={YAXIS_VALUES}
+              yAxis={yAxis}
             >
               {({results, errored, loading, reloading}) => {
                 if (errored) {
@@ -197,6 +215,10 @@ class VitalChart extends React.Component<Props> {
                       color: colors[i],
                     }))
                   : [];
+
+                const seriesMax = getMaxOfSeries(series);
+                const yAxisMax = Math.max(seriesMax, vitalThreshold);
+                chartOptions.yAxis.max = yAxisMax * 1.1;
 
                 // Stack the toolbox under the legend.
                 // so all series names are clickable.
@@ -221,7 +243,7 @@ class VitalChart extends React.Component<Props> {
                               {...chartOptions}
                               legend={legend}
                               onLegendSelectChanged={this.handleLegendSelectChanged}
-                              series={[...series, ...releaseSeries]}
+                              series={[...markLines, ...releaseSeries, ...series]}
                             />
                           ),
                           fixed: 'Web Vitals Chart',

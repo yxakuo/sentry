@@ -3,6 +3,7 @@ import {Location} from 'history';
 
 import {WebVital} from 'app/utils/discover/fields';
 import {decodeScalar} from 'app/utils/queryString';
+import {Series} from 'app/types/echarts';
 
 export function generateVitalDetailRoute({orgSlug}: {orgSlug: String}): string {
   return `/organizations/${orgSlug}/performance/vitaldetail/`;
@@ -51,6 +52,8 @@ export const vitalMap: Partial<Record<WebVital, string>> = {
   [WebVital.LCP]: 'Largest Contentful Paint',
 };
 
+export const vitalChartTitleMap = vitalMap;
+
 export const vitalDescription: Partial<Record<WebVital, string>> = {
   [WebVital.FP]: '', // TODO
   [WebVital.FCP]: '', // TODO
@@ -81,3 +84,13 @@ export const vitalDetailOptions: Partial<Record<WebVital, VitalOption[]>> = {
     },
   ],
 };
+
+export function getMaxOfSeries(series: Series[]) {
+  let max = Number.MIN_VALUE;
+  for (const {data} of series) {
+    for (const point of data) {
+      max = Math.max(max, point.value);
+    }
+  }
+  return max;
+}
