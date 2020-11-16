@@ -8,7 +8,7 @@ export function generateVitalsRoute({orgSlug}: {orgSlug: String}): string {
 }
 
 export function generateVitalDetailRoute({orgSlug}: {orgSlug: string}): string {
-  return `/organizations/${orgSlug}/performance/vitaldetail`;
+  return `/organizations/${orgSlug}/performance/vitaldetail/`;
 }
 
 export function vitalsRouteWithQuery({

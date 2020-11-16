@@ -25,13 +25,14 @@ import theme from 'app/utils/theme';
 import {tooltipFormatter, axisLabelFormatter} from 'app/utils/discover/charts';
 import getDynamicText from 'app/utils/getDynamicText';
 import {Panel} from 'app/components/panels';
-
-import {HeaderTitleLegend} from '../styles';
 import styled from 'app/styled';
 import space from 'app/styles/space';
-import {getMaxOfSeries, vitalChartTitleMap, vitalNameFromLocation} from './utils';
 import MarkLine from 'app/components/charts/components/markLine';
+
+import {getMaxOfSeries, vitalChartTitleMap, vitalNameFromLocation} from './utils';
+import {HeaderTitleLegend} from '../styles';
 import {WEB_VITAL_DETAILS} from '../transactionVitals/constants';
+import {transformEventStatsSmoothed} from '../trends/utils';
 
 const QUERY_KEYS = [
   'environment',
@@ -213,7 +214,29 @@ class VitalChart extends React.Component<Props> {
                   ? results.map((values, i: number) => ({
                       ...values,
                       color: colors[i],
+                      lineStyle: {
+                        width: 1,
+                        opacity: 0.5,
+                      },
                     }))
+                  : [];
+
+                const {smoothedResults} = transformEventStatsSmoothed(
+                  results,
+                  'Smoothed'
+                );
+
+                const smoothedSeries = smoothedResults
+                  ? smoothedResults.map((values, i: number) => {
+                      return {
+                        ...values,
+                        color: colors[i],
+                        lineStyle: {
+                          opacity: 1,
+                          width: 3,
+                        },
+                      };
+                    })
                   : [];
 
                 const seriesMax = getMaxOfSeries(series);
@@ -243,7 +266,12 @@ class VitalChart extends React.Component<Props> {
                               {...chartOptions}
                               legend={legend}
                               onLegendSelectChanged={this.handleLegendSelectChanged}
-                              series={[...markLines, ...releaseSeries, ...series]}
+                              series={[
+                                ...markLines,
+                                ...releaseSeries,
+                                ...smoothedSeries,
+                                ...series,
+                              ]}
                             />
                           ),
                           fixed: 'Web Vitals Chart',

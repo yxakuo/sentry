@@ -1,5 +1,4 @@
-import {Query} from 'history';
-import {Location} from 'history';
+import {Query, Location} from 'history';
 
 import {WebVital} from 'app/utils/discover/fields';
 import {decodeScalar} from 'app/utils/queryString';
@@ -81,6 +80,30 @@ export const vitalDetailOptions: Partial<Record<WebVital, VitalOption[]>> = {
     {
       label: 'FID (p75)',
       field: 'p75(measurements.fid)',
+    },
+  ],
+  [WebVital.FP]: [
+    {
+      label: 'FP (p75)',
+      field: 'p75(measurements.fp)',
+    },
+  ],
+  [WebVital.FCP]: [
+    {
+      label: 'FCP (p75)',
+      field: 'p75(measurements.fcp)',
+    },
+  ],
+  [WebVital.LCP]: [
+    {
+      label: 'LCP (p75)',
+      field: 'p75(measurements.lcp)',
+    },
+  ],
+  [WebVital.CLS]: [
+    {
+      label: 'CLS (p75)',
+      field: 'p75(measurements.cls)',
     },
   ],
 };

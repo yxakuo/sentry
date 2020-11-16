@@ -326,34 +326,42 @@ export function transformEventStatsSmoothed(data?: Series[], seriesName?: string
       smoothedResults: undefined,
     };
   }
-  const currentData = data[0].data;
-  const resultData: SeriesDataUnit[] = [];
 
-  const smoothed = smoothTrend(currentData.map(({name, value}) => [Number(name), value]));
+  const smoothedResults: Series[] = [];
 
-  for (let i = 0; i < smoothed.length; i++) {
-    const point = smoothed[i] as any;
-    const value = point.y;
-    resultData.push({
-      name: point.x,
-      value,
-    });
-    if (!isNaN(value)) {
-      const rounded = Math.round(value);
-      minValue = Math.min(rounded, minValue);
-      maxValue = Math.max(rounded, maxValue);
+  for (const current of data) {
+    const currentData = current.data;
+    const resultData: SeriesDataUnit[] = [];
+
+    const smoothed = smoothTrend(
+      currentData.map(({name, value}) => [Number(name), value])
+    );
+
+    for (let i = 0; i < smoothed.length; i++) {
+      const point = smoothed[i] as any;
+      const value = point.y;
+      resultData.push({
+        name: point.x,
+        value,
+      });
+      if (!isNaN(value)) {
+        const rounded = Math.round(value);
+        minValue = Math.min(rounded, minValue);
+        maxValue = Math.max(rounded, maxValue);
+      }
     }
+    smoothedResults.push({
+      seriesName: seriesName || 'Current',
+      data: resultData,
+      lineStyle: current.lineStyle,
+      color: current.color,
+    });
   }
 
   return {
     minValue,
     maxValue,
-    smoothedResults: [
-      {
-        seriesName: seriesName || 'Current',
-        data: resultData,
-      },
-    ],
+    smoothedResults,
   };
 }
 
