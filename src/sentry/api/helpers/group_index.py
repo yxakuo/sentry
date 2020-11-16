@@ -9,6 +9,7 @@ from uuid import uuid4
 
 from django.db import IntegrityError, transaction
 from django.utils import timezone
+from django.db.models import Q
 
 from rest_framework import serializers
 from rest_framework.exceptions import ParseError
@@ -69,12 +70,81 @@ from sentry.utils.audit import create_audit_entry
 from sentry.utils.cursors import Cursor
 from sentry.utils.functional import extract_lazy_object
 from sentry.utils.compat import zip
+from sentry.models.savedsearch import SavedSearch
+from sentry.models.search_common import SearchType
 
 delete_logger = logging.getLogger("sentry.deletions.api")
 
 
 class ValidationError(Exception):
     pass
+
+
+def get_saved_search(request, organization):
+    # TODO: Gross copy paste of OrganizationSearchesEndpoint.get
+    org_searches_q = Q(Q(owner=request.user) | Q(owner__isnull=True), organization=organization)
+    global_searches_q = Q(is_global=True)
+    saved_searches = list(
+        SavedSearch.objects.filter(org_searches_q | global_searches_q, type=SearchType(0)).extra(
+            select={"has_owner": "owner_id is not null", "name__upper": "UPPER(name)"},
+            order_by=["-has_owner", "name__upper"],
+        )
+    )
+    results = []
+    if saved_searches:
+        pinned_search = None
+        # If the saved search has an owner then it's the user's pinned
+        # search. The user can only have one pinned search.
+        results.append(saved_searches[0])
+        if saved_searches[0].is_pinned:
+            pinned_search = saved_searches[0]
+        for saved_search in saved_searches[1:]:
+            # If a search has the same query as the pinned search we
+            # want to use that search as the pinned search
+            if pinned_search and saved_search.query == pinned_search.query:
+                saved_search.is_pinned = True
+                results[0] = saved_search
+            else:
+                results.append(saved_search)
+        # TODO: Kinda gross
+        return results[0].query
+    return "is:unresolved"
+
+
+def get_saved_search_by_id(request, organization, search_id):
+    # TODO: Gross copy paste of OrganizationSearchesEndpoint.get
+    # TODO: LOL YOU EVER SEE CODE THIS BAD
+    org_searches_q = Q(Q(owner=request.user) | Q(owner__isnull=True), organization=organization)
+    global_searches_q = Q(is_global=True)
+    saved_searches = list(
+        SavedSearch.objects.filter(id=search_id)
+        .filter(org_searches_q | global_searches_q, type=SearchType(0))
+        .extra(
+            select={"has_owner": "owner_id is not null", "name__upper": "UPPER(name)"},
+            order_by=["-has_owner", "name__upper"],
+        )
+    )
+    results = []
+    print(saved_searches)
+    if saved_searches:
+        pinned_search = None
+        # If the saved search has an owner then it's the user's pinned
+        # search. The user can only have one pinned search.
+        results.append(saved_searches[0])
+        if saved_searches[0].is_pinned:
+            pinned_search = saved_searches[0]
+        for saved_search in saved_searches[1:]:
+            # If a search has the same query as the pinned search we
+            # want to use that search as the pinned search
+            if pinned_search and saved_search.query == pinned_search.query:
+                saved_search.is_pinned = True
+                results[0] = saved_search
+            else:
+                results.append(saved_search)
+        # TODO: Kinda gross
+        return results[0].query
+
+    raise Exception("search id doesn't exist")
 
 
 def build_query_params_from_request(request, organization, projects, environments):
@@ -93,7 +163,18 @@ def build_query_params_from_request(request, organization, projects, environment
             query_kwargs["cursor"] = Cursor.from_string(request.GET.get("cursor"))
         except ValueError:
             raise ParseError(detail="Invalid cursor parameter.")
-    query = request.GET.get("query", "is:unresolved").strip()
+
+    query = "is:unresolved"
+    default_query = request.GET.get("defaultQuery")
+    if default_query:
+        query = get_saved_search(request, organization)
+
+    search_id = request.GET.get("searchId")
+    print("search_id", search_id)
+    if search_id:
+        query = get_saved_search_by_id(request, organization, int(search_id))
+
+    query = request.GET.get("query", query).strip()
     if query:
         try:
             search_filters = convert_query_values(

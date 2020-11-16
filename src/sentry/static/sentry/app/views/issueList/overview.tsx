@@ -202,8 +202,7 @@ class IssueListOverview extends React.Component<Props, State> {
       prevQuery.sort !== newQuery.sort ||
       prevQuery.query !== newQuery.query ||
       prevQuery.statsPeriod !== newQuery.statsPeriod ||
-      prevQuery.groupStatsPeriod !== newQuery.groupStatsPeriod ||
-      prevProps.savedSearch !== this.props.savedSearch
+      prevQuery.groupStatsPeriod !== newQuery.groupStatsPeriod
     ) {
       this.fetchData();
     } else if (
@@ -236,7 +235,8 @@ class IssueListOverview extends React.Component<Props, State> {
   }
 
   private _poller: any;
-  private _lastRequest: any;
+  private _lastRequest?: ReturnType<Client['request']> | null;
+  private _firstQuery = true;
   private _streamManager = new StreamManager(GroupStore);
 
   getQuery(): string {
@@ -333,6 +333,18 @@ class IssueListOverview extends React.Component<Props, State> {
       limit: MAX_ITEMS,
       shortIdLookup: 1,
     };
+
+    // TODO make *default query* constant or something less gross
+    if (this._firstQuery && requestParams.query === DEFAULT_QUERY) {
+      requestParams.query = undefined;
+      if (this.props.params.searchId) {
+        requestParams.searchId = this.props.params.searchId;
+      } else {
+        // defaultQuery uses pinned search if available
+        requestParams.defaultQuery = true;
+      }
+    }
+    this._firstQuery = false;
 
     const currentQuery = this.props.location.query || {};
     if ('cursor' in currentQuery) {

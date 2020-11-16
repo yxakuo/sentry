@@ -98,6 +98,10 @@ class OrganizationGroupIndexEndpoint(OrganizationEventsEndpointBase):
         :qparam querystring query: an optional Sentry structured search
                                    query.  If not provided an implied
                                    ``"is:unresolved"`` is assumed.)
+        :qparam bool defaultQuery: If true, ignores query and uses pinned
+            search as query, falls back to ``"is:unresolved"``
+        :qparam number searchId: If provided, ignores query and uses saved
+            search as query
         :pparam string organization_slug: the slug of the organization the
                                           issues belong to.
         :auth: required
