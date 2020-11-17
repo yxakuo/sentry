@@ -9,9 +9,10 @@ import {Panel} from 'app/components/panels';
 import {formatPercentage} from 'app/utils/formatters';
 import VitalsCardDiscoverQuery from 'app/views/performance/vitalDetail/vitalsCardsDiscoverQuery';
 import {WebVital} from 'app/utils/discover/fields';
-import {vitalAbbreviation} from './vitalDetail/utils';
+import {vitalAbbreviations} from './vitalDetail/utils';
 import {vitalDetailRouteWithQuery} from './transactionVitals/utils';
 import Link from 'app/components/links/link';
+import {t} from 'app/locale';
 
 type Props = {
   eventView: EventView;
@@ -112,14 +113,14 @@ export function LinkedVitalsCard(props: CardProps) {
 export function VitalsCard(props: CardProps) {
   const {isLoading, tableData, vitalName, noBorder} = props;
 
-  const measurement = vitalAbbreviation[vitalName];
+  const measurement = vitalAbbreviations[vitalName];
 
   const Container = noBorder ? NonPanel : StyledQueryCard;
 
   if (isLoading || !tableData || !tableData.data || !tableData.data[0]) {
     return (
       <Container>
-        <CardTitle>Total Passing {measurement}</CardTitle>
+        <CardTitle>{t(`${measurement} Passing`)}</CardTitle>
         <CardValue>-</CardValue>
       </Container>
     );

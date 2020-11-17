@@ -21,20 +21,24 @@ import {transactionSummaryRouteWithQuery} from '../transactionSummary/utils';
 import styled from 'app/styled';
 import space from 'app/styles/space';
 import {WEB_VITAL_DETAILS} from '../transactionVitals/constants';
-import {vitalNameFromLocation} from './utils';
+import {vitalAbbreviations, vitalNameFromLocation} from './utils';
 import Tag from 'app/components/tagDeprecated';
 import {t} from 'app/locale';
+import {WebVital} from 'app/utils/discover/fields';
 
-const COLUMN_TITLES = [
-  'Transaction',
-  'Project',
-  'Unique Users',
-  'Count',
-  'FID(p50)',
-  'FID(p75)',
-  'FID(p95)',
-  'FID(Status)',
-];
+const COLUMN_TITLES = ['Transaction', 'Project', 'Unique Users', 'Count'];
+
+const getTableColumnTitle = (index: number, vitalName: WebVital) => {
+  const abbrev = vitalAbbreviations[vitalName];
+  const titles = [
+    ...COLUMN_TITLES,
+    `${abbrev}(p50)`,
+    `${abbrev}(p75)`,
+    `${abbrev}(p95)`,
+    `${abbrev}(Status)`,
+  ];
+  return titles[index];
+};
 
 export function getProjectID(
   eventData: EventData,
@@ -236,9 +240,9 @@ class Table extends React.Component<Props, State> {
     );
   }
 
-  renderHeadCellWithMeta = (tableMeta: TableData['meta']) => {
+  renderHeadCellWithMeta = (tableMeta: TableData['meta'], vitalName: WebVital) => {
     return (column: TableColumn<keyof TableDataRow>, index: number): React.ReactNode =>
-      this.renderHeadCell(tableMeta, column, COLUMN_TITLES[index]);
+      this.renderHeadCell(tableMeta, column, getTableColumnTitle(index, vitalName));
   };
 
   renderPrependCellWithData = (tableData: TableData | null) => {
@@ -352,7 +356,10 @@ class Table extends React.Component<Props, State> {
                 columnSortBy={columnSortBy}
                 grid={{
                   onResizeColumn: this.handleResizeColumn,
-                  renderHeadCell: this.renderHeadCellWithMeta(tableData?.meta) as any,
+                  renderHeadCell: this.renderHeadCellWithMeta(
+                    tableData?.meta,
+                    vitalName
+                  ) as any,
                   renderBodyCell: this.renderBodyCellWithData(tableData) as any,
                   renderPrependColumns: this.renderPrependCellWithData(tableData) as any,
                   prependColumnWidths,

@@ -316,6 +316,14 @@ export const smoothTrend = (data: [number, number][], resolution = 100) => {
   return ASAP(data, resolution);
 };
 
+export const replaceSeriesName = (seriesName: string) => {
+  return ['p50', 'p75'].find(aggregate => seriesName.includes(aggregate));
+};
+
+export const replaceSmoothedSeriesName = (seriesName: string) => {
+  return `Smoothed ${['p50', 'p75'].find(aggregate => seriesName.includes(aggregate))}`;
+};
+
 export function transformEventStatsSmoothed(data?: Series[], seriesName?: string) {
   let minValue = Number.MAX_SAFE_INTEGER;
   let maxValue = 0;
@@ -351,7 +359,7 @@ export function transformEventStatsSmoothed(data?: Series[], seriesName?: string
       }
     }
     smoothedResults.push({
-      seriesName: seriesName || 'Current',
+      seriesName: seriesName || current.seriesName || 'Current',
       data: resultData,
       lineStyle: current.lineStyle,
       color: current.color,
