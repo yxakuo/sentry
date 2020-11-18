@@ -49,6 +49,7 @@ class OrganizationReleaseFilesEndpoint(OrganizationReleasesBaseEndpoint):
         :pparam string version: the version identifier of the release.
         :auth: required
         """
+        # TODO: handle request.GET.get("asc", "")
         try:
             release = Release.objects.get(organization_id=organization.id, version=version)
         except Release.DoesNotExist:
@@ -58,13 +59,13 @@ class OrganizationReleaseFilesEndpoint(OrganizationReleasesBaseEndpoint):
             raise ResourceDoesNotExist
 
         file_list = (
-            ReleaseFile.objects.filter(release=release).select_related("file").order_by("name")
+            ReleaseFile.objects.filter(release=release).select_related("file").order_by("size")
         )
 
         return self.paginate(
             request=request,
             queryset=file_list,
-            order_by="name",
+            order_by="size",
             paginator_cls=OffsetPaginator,
             max_offset=MAX_RELEASE_FILES_OFFSET,
             on_results=lambda r: serialize(load_dist(r), request.user),

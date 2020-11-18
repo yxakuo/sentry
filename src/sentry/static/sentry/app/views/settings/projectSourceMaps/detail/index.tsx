@@ -151,6 +151,7 @@ class ProjectSourceMapsDetail extends AsyncView<Props, State> {
     const {loading, artifacts, artifactsPageLinks} = this.state;
     const {name, orgId} = this.props.params;
     const {project} = this.props;
+    const artifactApiUrl = this.api.baseUrl + this.getArtifactsUrl();
 
     return (
       <React.Fragment>
@@ -208,7 +209,18 @@ class ProjectSourceMapsDetail extends AsyncView<Props, State> {
         <StyledPanelTable
           headers={[
             t('Artifact'),
-            <SizeColumn key="size">{t('File Size')}</SizeColumn>,
+            <StyledSortLink
+              to={{
+                pathname: this.artifactApiUrl,
+                query: {
+                  ...query,
+                  asc: sort.asc ? undefined : '1',
+                },
+              }}
+            >
+              <SizeColumn key="size">{t('File Size')} </SizeColumn>
+              <IconArrow color="gray300" size="xs" direction={sort.asc ? 'up' : 'down'} />
+            </StyledSortLink>,
             '',
           ]}
           emptyMessage={this.getEmptyMessage()}
