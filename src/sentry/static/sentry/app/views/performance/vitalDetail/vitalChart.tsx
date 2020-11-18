@@ -55,15 +55,7 @@ type Props = ReactRouter.WithRouterProps &
     organization: OrganizationSummary;
   };
 
-type State = {
-  isSmoothed: boolean;
-};
-
-class VitalChart extends React.Component<Props, State> {
-  state: State = {
-    isSmoothed: true,
-  };
-
+class VitalChart extends React.Component<Props> {
   handleLegendSelectChanged = legendChange => {
     const {location} = this.props;
     const {selected} = legendChange;
@@ -79,12 +71,6 @@ class VitalChart extends React.Component<Props, State> {
     browserHistory.push(to);
   };
 
-  handleSmoothedSwitch = (isCurrentlySmoothed: boolean) => {
-    this.setState({
-      isSmoothed: !isCurrentlySmoothed,
-    });
-  };
-
   render() {
     const {
       api,
@@ -96,7 +82,6 @@ class VitalChart extends React.Component<Props, State> {
       statsPeriod,
       router,
     } = this.props;
-    const {isSmoothed} = this.state;
 
     const start = this.props.start
       ? getUtcToLocalDateObject(this.props.start)
@@ -235,7 +220,7 @@ class VitalChart extends React.Component<Props, State> {
                   const smoothedSeries = smoothedResults
                     ? smoothedResults.map(({seriesName, ...rest}, i: number) => {
                         return {
-                          seriesName: replaceSmoothedSeriesName(seriesName),
+                          seriesName: replaceSmoothedSeriesName(seriesName) || 'Current',
                           ...rest,
                           color: colors[i],
                           lineStyle: {
@@ -249,7 +234,7 @@ class VitalChart extends React.Component<Props, State> {
                   // Create a list of series based on the order of the fields,
                   const series = results
                     ? results.map(({seriesName, ...rest}, i: number) => ({
-                        seriesName: replaceSeriesName(seriesName),
+                        seriesName: replaceSeriesName(seriesName) || 'Current',
                         ...rest,
                         color: colors[i],
                         lineStyle: {
