@@ -147,6 +147,7 @@ class ExternalIssueActions extends AsyncComponent<Props, State> {
             );
           })}
 
+        {/* TODO MARCOS 1 */}
         {unlinked.length > 0 && (
           <IssueSyncListElement
             integrationType={unlinked[0].provider.key}

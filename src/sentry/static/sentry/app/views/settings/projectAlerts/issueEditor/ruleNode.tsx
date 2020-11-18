@@ -17,8 +17,11 @@ import space from 'app/styles/space';
 import {t, tct} from 'app/locale';
 import MemberTeamFields from 'app/views/settings/projectAlerts/issueEditor/memberTeamFields';
 import ExternalLink from 'app/components/links/externalLink';
-import {Organization, Project} from 'app/types';
+import {GroupIntegration, Organization, Project} from 'app/types'
 import {IconDelete} from 'app/icons';
+import Modal from 'react-bootstrap/lib/Modal'
+import NavTabs from 'app/components/navTabs'
+import ExternalIssueForm from 'app/components/group/externalIssueForm'
 
 type FormField = {
   // Type of form fields
@@ -186,6 +189,22 @@ class RuleNode extends React.Component<Props> {
     return getFieldTypes[fieldConfig.type](name, fieldConfig);
   };
 
+  openModal = (formFields: any) => {
+    this.setState({
+      showModal: true,
+      formFields: formFields,
+      action: 'create',
+    });
+  };
+
+  closeModal = () => {
+    this.setState({
+      showModal: false,
+      action: null,
+      selectedIntegration: null,
+    });
+  };
+
   renderRow() {
     const {data, node} = this.props;
 
@@ -197,6 +216,7 @@ class RuleNode extends React.Component<Props> {
         </Separator>
       );
     }
+    // TODO be able to render a button
 
     const {label, formFields} = node;
 
@@ -213,12 +233,55 @@ class RuleNode extends React.Component<Props> {
         return null;
       }
 
+      let formPart;
+      if (formFields && formFields.hasOwnProperty(key)) {
+        formPart = this.getField(key, formFields[key])
+      } else if (formFields["type"] === "modalButton") {
+        formPart = <Button
+          onClick={() => this.openModal(formFields)}
+        >
+          {
+            <Modal
+              show={this.state.showModal}
+              onHide={this.closeModal}
+              animation={false}
+              enforceFocus={false}
+              backdrop="static"
+            >
+              <Modal.Header closeButton>
+                <Modal.Title>{`${selectedIntegration.provider.name} Issue`}</Modal.Title>
+              </Modal.Header>
+              <NavTabs underlined>
+                <li className={action === 'create' ? 'active' : ''}>
+                  <a onClick={() => this.handleClick('create')}>{t('Create')}</a>
+                </li>
+                <li className={action === 'link' ? 'active' : ''}>
+                  <a onClick={() => this.handleClick('link')}>{t('Link')}</a>
+                </li>
+              </NavTabs>
+              <Modal.Body>
+                {action && (
+                  <ExternalIssueForm
+                    // need the key here so React will re-render
+                    // with a new action prop
+                    key={action}
+                    group={this.props.group}
+                    integration={selectedIntegration}
+                    action={action}
+                    onSubmitSuccess={(_, onSuccess) => this.linkIssueSuccess(onSuccess)}
+                  />
+                )}
+              </Modal.Body>
+            </Modal>
+          )}
+        </Button>;
+      } else {
+        formPart = part;
+      }
+
+
       return (
-        <Separator key={key}>
-          {formFields && formFields.hasOwnProperty(key)
-            ? this.getField(key, formFields[key])
-            : part}
-        </Separator>
+        <Separator key={key}>{ formPart }</Separator>
       );
     });
 
