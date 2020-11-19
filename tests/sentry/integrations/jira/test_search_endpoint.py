@@ -5,14 +5,14 @@ import responses
 from exam import fixture
 from six.moves.urllib.parse import urlparse, parse_qs
 
-from django.core.urlresolvers import reverse
-
 from sentry.models import Integration
 from sentry.testutils import APITestCase
 from tests.fixtures.integrations.mock_service import StubService
 
 
 class JiraSearchEndpointTest(APITestCase):
+    endpoint = "sentry-extensions-jira-search"
+
     @fixture
     def integration(self):
         integration = Integration.objects.create(
@@ -40,10 +40,9 @@ class JiraSearchEndpointTest(APITestCase):
         org = self.organization
         self.login_as(self.user)
 
-        path = reverse("sentry-extensions-jira-search", args=[org.slug, self.integration.id])
-
-        resp = self.client.get("%s?field=externalIssue&query=test" % (path,))
-        assert resp.status_code == 200
+        resp = self.get_valid_response(
+            org.slug, self.integration.id, qs_params={"field": "externalIssue", "query": "test"}
+        )
         assert resp.data == [{"label": "(HSP-1) this is a test issue summary", "value": "HSP-1"}]
 
     @responses.activate
@@ -63,11 +62,10 @@ class JiraSearchEndpointTest(APITestCase):
         org = self.organization
         self.login_as(self.user)
 
-        path = reverse("sentry-extensions-jira-search", args=[org.slug, self.integration.id])
-
         # queries come through from the front end lowercased, so HSP-1 -> hsp-1
-        resp = self.client.get("%s?field=externalIssue&query=hsp-1" % (path,))
-        assert resp.status_code == 200
+        resp = self.get_valid_response(
+            org.slug, self.integration.id, qs_params={"field": "externalIssue", "query": "hsp-1"}
+        )
         assert resp.data == [{"label": "(HSP-1) this is a test issue summary", "value": "HSP-1"}]
 
     @responses.activate
@@ -82,9 +80,9 @@ class JiraSearchEndpointTest(APITestCase):
         org = self.organization
         self.login_as(self.user)
 
-        path = reverse("sentry-extensions-jira-search", args=[org.slug, self.integration.id])
-
-        resp = self.client.get("%s?field=externalIssue&query=test" % (path,))
+        resp = self.get_response(
+            org.slug, self.integration.id, qs_params={"field": "externalIssue", "query": "test"}
+        )
         assert resp.status_code == 400
         assert resp.data == {"detail": "Error Communicating with Jira (HTTP 500): unknown error"}
 
@@ -114,10 +112,11 @@ class JiraSearchEndpointTest(APITestCase):
         org = self.organization
         self.login_as(self.user)
 
-        path = reverse("sentry-extensions-jira-search", args=[org.slug, self.integration.id])
-
-        resp = self.client.get("%s?project=10000&field=assignee&query=bob" % (path,))
-        assert resp.status_code == 200
+        resp = self.get_valid_response(
+            org.slug,
+            self.integration.id,
+            qs_params={"project": "10000", "field": "assignee", "query": "bob"},
+        )
         assert resp.data == [{"value": "deadbeef123", "label": "Bobby - bob@example.org"}]
 
     @responses.activate
@@ -138,7 +137,9 @@ class JiraSearchEndpointTest(APITestCase):
         org = self.organization
         self.login_as(self.user)
 
-        path = reverse("sentry-extensions-jira-search", args=[org.slug, self.integration.id])
-
-        resp = self.client.get("%s?project=10000&field=assignee&query=bob" % (path,))
+        resp = self.get_response(
+            org.slug,
+            self.integration.id,
+            qs_params={"project": "10000", "field": "assignee", "query": "bob"},
+        )
         assert resp.status_code == 400
