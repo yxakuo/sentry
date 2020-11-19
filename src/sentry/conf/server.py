@@ -891,6 +891,12 @@ SENTRY_FEATURES = {
     # Prefix host with organization ID when giving users DSNs (can be
     # customized with SENTRY_ORG_SUBDOMAIN_TEMPLATE)
     "organizations:org-subdomains": False,
+    # Enable the new Performance Landing page
+    "organizations:performance-landing-v2": False,
+    # Enable the views for performance vitals
+    "organizations:performance-vitals-overview": False,
+    # Enable the new Project Detail page
+    "organizations:project-detail": False,
     # Enable the new Related Events feature
     "organizations:related-events": False,
     # Enable usage of external relays, for use with Relay. See
@@ -907,6 +913,8 @@ SENTRY_FEATURES = {
     "organizations:sso-rippling": False,
     # Enable workaround for migrating IdP instances
     "organizations:sso-migration": False,
+    # Enable stack trace preview card on issue row hover
+    "organizations:stacktrace-hover-preview": False,
     # Enable transaction comparison view for performance.
     "organizations:transaction-comparison": False,
     # Enable graph for subscription quota for errors, transactions and
@@ -1881,9 +1889,12 @@ SENTRY_USER_PERMISSIONS = ("broadcasts.admin",)
 
 KAFKA_CLUSTERS = {
     "default": {
-        "bootstrap.servers": "127.0.0.1:9092",
-        "compression.type": "lz4",
-        "message.max.bytes": 50000000,  # 50MB, default is 1MB
+        "common": {"bootstrap.servers": "127.0.0.1:9092"},
+        "producers": {
+            "compression.type": "lz4",
+            "message.max.bytes": 50000000,  # 50MB, default is 1MB
+        },
+        "consumers": {},
     }
 }
 

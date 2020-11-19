@@ -42,6 +42,7 @@ class OrganizationGroupIndexEndpoint(OrganizationEventsEndpointBase):
         "bookmarked_by",
         "assigned_to",
         "unassigned",
+        "linked",
         "subscribed_by",
         "active_at",
         "first_release",
@@ -306,6 +307,7 @@ class OrganizationGroupIndexEndpoint(OrganizationEventsEndpointBase):
         :auth: required
         """
         projects = self.get_projects(request, organization)
+        has_inbox = features.has("organizations:inbox", organization, actor=request.user)
         if len(projects) > 1 and not features.has(
             "organizations:global-views", organization, actor=request.user
         ):
@@ -320,7 +322,7 @@ class OrganizationGroupIndexEndpoint(OrganizationEventsEndpointBase):
             projects,
             self.get_environments(request, organization),
         )
-        return update_groups(request, projects, organization.id, search_fn)
+        return update_groups(request, projects, organization.id, search_fn, has_inbox)
 
     @rate_limit_endpoint(limit=10, window=1)
     def delete(self, request, organization):
