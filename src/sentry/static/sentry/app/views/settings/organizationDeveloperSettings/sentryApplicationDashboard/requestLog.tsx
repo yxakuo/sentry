@@ -9,7 +9,7 @@ import EmptyMessage from 'app/views/settings/components/emptyMessage';
 import DateTime from 'app/components/dateTime';
 import DropdownControl, {DropdownItem} from 'app/components/dropdownControl';
 import DropdownButton from 'app/components/dropdownButton';
-import Tag from 'app/components/tagDeprecated';
+import Tag from 'app/components/tag';
 import ExternalLink from 'app/components/links/externalLink';
 import LoadingIndicator from 'app/components/loadingIndicator';
 import Checkbox from 'app/components/checkbox';
@@ -18,7 +18,6 @@ import space from 'app/styles/space';
 import {IconChevron, IconFlag, IconOpen} from 'app/icons';
 import {t} from 'app/locale';
 import {SentryApp, SentryAppWebhookRequest, SentryAppSchemaIssueLink} from 'app/types';
-import {Theme} from 'app/utils/theme';
 
 const ALL_EVENTS = t('All Events');
 const MAX_PER_PAGE = 10;
@@ -70,16 +69,16 @@ const getEventTypes = memoize((app: SentryApp) => {
 });
 
 const ResponseCode = ({code}: {code: number}) => {
-  let priority: keyof Theme['alert'] = 'error';
+  let type: React.ComponentProps<typeof Tag>['type'] = 'error';
   if (code <= 399 && code >= 300) {
-    priority = 'warning';
+    type = 'warning';
   } else if (code <= 299 && code >= 100) {
-    priority = 'success';
+    type = 'success';
   }
 
   return (
     <div>
-      <Tag priority={priority}>{code === 0 ? 'timeout' : code}</Tag>
+      <Tag type={type}>{code === 0 ? 'timeout' : code}</Tag>
     </div>
   );
 };
