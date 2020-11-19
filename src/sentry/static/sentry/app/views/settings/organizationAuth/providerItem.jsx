@@ -12,7 +12,7 @@ import FeatureDisabled from 'app/components/acl/featureDisabled';
 import Hovercard from 'app/components/hovercard';
 import SentryTypes from 'app/sentryTypes';
 import {IconLock} from 'app/icons';
-import Tag from 'app/components/tagDeprecated';
+import Tag from 'app/components/tag';
 import {descopeFeatureName} from 'app/utils';
 
 export default class ProviderItem extends React.PureComponent {
@@ -153,7 +153,7 @@ const LockedFeature = ({provider, features, className}) => (
       />
     }
   >
-    <Tag icon={<IconLock size="xs" />}>disabled</Tag>
+    <Tag icon={<IconLock />}>{t('disabled')}</Tag>
   </DisabledHovercard>
 );
 
