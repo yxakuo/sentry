@@ -4,6 +4,7 @@ import PropTypes from 'prop-types';
 import React from 'react';
 import {AnimatePresence, motion} from 'framer-motion';
 import PlatformIcon from 'platformicons';
+import 'prism-sentry/index.css';
 
 import {analytics} from 'app/utils/analytics';
 import {loadDocs} from 'app/actionCreators/projects';
