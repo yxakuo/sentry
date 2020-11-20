@@ -29,7 +29,7 @@ import DebugImage from './debugImage';
 import {getFileName} from './utils';
 
 const MIN_FILTER_LEN = 3;
-const PANEL_MAX_HEIGHT = 500;
+const PANEL_MAX_HEIGHT = 400;
 
 type Image = React.ComponentProps<typeof DebugImage>['image'];
 
@@ -51,7 +51,6 @@ type State = {
   filteredImages: Array<Image>;
   showUnused: boolean;
   showDetails: boolean;
-  clipHeight: number;
   foundFrame?: Frame;
   panelBodyHeight?: number;
 };
@@ -72,7 +71,6 @@ class DebugMeta extends React.PureComponent<Props, State> {
     filteredImages: [],
     showUnused: false,
     showDetails: false,
-    clipHeight: PANEL_MAX_HEIGHT,
   };
 
   componentDidMount() {
@@ -396,7 +394,7 @@ class DebugMeta extends React.PureComponent<Props, State> {
       >
         <DebugImagesPanel>
           {filteredImages.length > 0 ? (
-            <div>
+            <React.Fragment>
               {foundFrame && (
                 <ImageForBar
                   frame={foundFrame}
@@ -406,7 +404,7 @@ class DebugMeta extends React.PureComponent<Props, State> {
               <PanelBody forwardRef={this.panelBodyRef}>
                 {this.renderImageList()}
               </PanelBody>
-            </div>
+            </React.Fragment>
           ) : (
             <EmptyMessage icon={<IconWarning size="xl" />}>
               {this.getNoImagesMessage()}
@@ -421,7 +419,6 @@ class DebugMeta extends React.PureComponent<Props, State> {
 export default DebugMeta;
 
 const StyledList = styled(List)<{height: number}>`
-  overflow: scroll;
   height: auto !important;
   max-height: ${p => p.height}px;
   outline: none;
