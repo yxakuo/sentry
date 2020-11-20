@@ -19,18 +19,16 @@ import {defined, percent} from 'app/utils';
 import {getExactDuration} from 'app/utils/formatters';
 
 import {displayCrashFreePercent, getCrashFreePercent, roundDuration} from '../../utils';
-
 import {YAxis} from './chart/releaseChartControls';
 import {getInterval, getReleaseEventView} from './chart/utils';
+import {sessionTerm} from '../../utils/sessionTerm';
 
 const omitIgnoredProps = (props: Props) =>
   omitBy(props, (_, key) =>
     ['api', 'version', 'orgId', 'projectSlug', 'location', 'children'].includes(key)
   );
 
-type ChartData = {
-  [key: string]: Series;
-};
+type ChartData = Record<string, Series>;
 
 type Data = {
   chartData: Series[];
@@ -238,7 +236,7 @@ class ReleaseStatsRequest extends React.Component<Props, State> {
     // here we can configure colors of the chart
     const chartData: ChartData = {
       crashed: {
-        seriesName: t('Crashed'),
+        seriesName: sessionTerm.crashed,
         data: [],
         color: CHART_PALETTE[3][0],
         areaStyle: {
@@ -251,7 +249,7 @@ class ReleaseStatsRequest extends React.Component<Props, State> {
         },
       },
       abnormal: {
-        seriesName: t('Abnormal'),
+        seriesName: sessionTerm.abnormal,
         data: [],
         color: CHART_PALETTE[3][1],
         areaStyle: {
@@ -264,7 +262,7 @@ class ReleaseStatsRequest extends React.Component<Props, State> {
         },
       },
       errored: {
-        seriesName: t('Errored'),
+        seriesName: sessionTerm.errored,
         data: [],
         color: CHART_PALETTE[3][2],
         areaStyle: {
@@ -277,7 +275,7 @@ class ReleaseStatsRequest extends React.Component<Props, State> {
         },
       },
       healthy: {
-        seriesName: t('Healthy'),
+        seriesName: sessionTerm.healthy,
         data: [],
         color: CHART_PALETTE[3][3],
         areaStyle: {
@@ -320,12 +318,12 @@ class ReleaseStatsRequest extends React.Component<Props, State> {
   ): Omit<Data, 'crashFreeTimeBreakdown'> {
     const chartData: ChartData = {
       users: {
-        seriesName: t('Crash Free Users'),
+        seriesName: sessionTerm['crash-free-users'],
         data: [],
         color: CHART_PALETTE[1][0],
       },
       sessions: {
-        seriesName: t('Crash Free Sessions'),
+        seriesName: sessionTerm['crash-free-sessions'],
         data: [],
         color: CHART_PALETTE[1][1],
       },
