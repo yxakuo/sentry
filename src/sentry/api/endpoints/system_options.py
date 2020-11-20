@@ -72,10 +72,10 @@ class SystemOptionsEndpoint(Endpoint):
                     options.delete(k)
                 else:
                     options.set(k, v)
-            except TypeError as e:
+            except (TypeError, AssertionError) as e:
                 return Response(
                     {
-                        "error": "invalid_type",
+                        "error": "invalid_type" if type(e) is TypeError else "invalid_option",
                         "errorDetail": {"option": k, "message": six.text_type(e)},
                     },
                     status=400,
