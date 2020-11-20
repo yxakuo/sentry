@@ -22,7 +22,6 @@ import SearchBar from 'app/components/searchBar';
 import {parseAddress, getImageRange} from 'app/components/events/interfaces/utils';
 import ImageForBar from 'app/components/events/interfaces/imageForBar';
 import {t, tct} from 'app/locale';
-import ClippedBox from 'app/components/clippedBox';
 import {IconWarning} from 'app/icons';
 import {Organization, Project, Event, Frame} from 'app/types';
 
@@ -30,8 +29,7 @@ import DebugImage from './debugImage';
 import {getFileName} from './utils';
 
 const MIN_FILTER_LEN = 3;
-const DEFAULT_CLIP_HEIGHT = 560;
-const PANEL_MAX_HEIGHT = 600;
+const PANEL_MAX_HEIGHT = 500;
 
 type Image = React.ComponentProps<typeof DebugImage>['image'];
 
@@ -74,7 +72,7 @@ class DebugMeta extends React.PureComponent<Props, State> {
     filteredImages: [],
     showUnused: false,
     showDetails: false,
-    clipHeight: DEFAULT_CLIP_HEIGHT,
+    clipHeight: PANEL_MAX_HEIGHT,
   };
 
   componentDidMount() {
@@ -327,7 +325,7 @@ class DebugMeta extends React.PureComponent<Props, State> {
   }
 
   renderImageList() {
-    const {filteredImages, showDetails, panelBodyHeight, clipHeight} = this.state;
+    const {filteredImages, showDetails, panelBodyHeight} = this.state;
     const {orgId, projectId} = this.props;
 
     if (!panelBodyHeight) {
@@ -357,24 +355,11 @@ class DebugMeta extends React.PureComponent<Props, State> {
             rowRenderer={this.renderRow}
             width={width}
             isScrolling={false}
-            overflowHidden={panelBodyHeight > clipHeight}
           />
         )}
       </AutoSizer>
     );
   }
-
-  handleOnReveal = () => {
-    const {panelBodyHeight} = this.state;
-
-    if (!panelBodyHeight) {
-      return;
-    }
-
-    this.setState({
-      clipHeight: panelBodyHeight,
-    });
-  };
 
   handleChangeShowUnused = (event: React.ChangeEvent<HTMLInputElement>) => {
     const showUnused = event.target.checked;
@@ -395,7 +380,7 @@ class DebugMeta extends React.PureComponent<Props, State> {
   };
 
   render() {
-    const {filteredImages, foundFrame, panelBodyHeight, clipHeight} = this.state;
+    const {filteredImages, foundFrame} = this.state;
 
     return (
       <StyledEventDataSection
@@ -411,11 +396,7 @@ class DebugMeta extends React.PureComponent<Props, State> {
       >
         <DebugImagesPanel>
           {filteredImages.length > 0 ? (
-            <ClippedBox
-              clipHeight={clipHeight}
-              renderedHeight={panelBodyHeight}
-              onReveal={this.handleOnReveal}
-            >
+            <div>
               {foundFrame && (
                 <ImageForBar
                   frame={foundFrame}
@@ -425,7 +406,7 @@ class DebugMeta extends React.PureComponent<Props, State> {
               <PanelBody forwardRef={this.panelBodyRef}>
                 {this.renderImageList()}
               </PanelBody>
-            </ClippedBox>
+            </div>
           ) : (
             <EmptyMessage icon={<IconWarning size="xl" />}>
               {this.getNoImagesMessage()}
@@ -439,8 +420,8 @@ class DebugMeta extends React.PureComponent<Props, State> {
 
 export default DebugMeta;
 
-const StyledList = styled(List)<{overflowHidden: boolean; height: number}>`
-  ${p => p.overflowHidden && 'overflow: hidden !important;'}
+const StyledList = styled(List)<{height: number}>`
+  overflow: scroll;
   height: auto !important;
   max-height: ${p => p.height}px;
   outline: none;
