@@ -3,7 +3,6 @@ import styled from '@emotion/styled';
 
 import {t} from 'app/locale';
 import TimeSince from 'app/components/timeSince';
-import Tag from 'app/components/tag';
 
 /**
  * Used in new inbox
@@ -18,7 +17,7 @@ type Props = {
 
 const TimesTag = ({lastSeen, firstSeen}: Props) => {
   return (
-    <Tag>
+    <Wrapper>
       {lastSeen && <TimeSince date={lastSeen} suffix={t('ago')} shorten />}
       {firstSeen && lastSeen && (
         <Seperator className="hidden-xs hidden-sm">&nbsp;|&nbsp;</Seperator>
@@ -31,9 +30,13 @@ const TimesTag = ({lastSeen, firstSeen}: Props) => {
           shorten
         />
       )}
-    </Tag>
+    </Wrapper>
   );
 };
+
+const Wrapper = styled('div')`
+  font-size: ${p => p.theme.fontSizeSmall};
+`;
 
 const Seperator = styled('span')`
   color: ${p => p.theme.subText};
