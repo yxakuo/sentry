@@ -1,8 +1,8 @@
-import {browserHistory} from 'react-router';
 import React from 'react';
+import {browserHistory} from 'react-router';
 
-import {initializeOrg} from 'sentry-test/initializeOrg';
 import {mountWithTheme} from 'sentry-test/enzyme';
+import {initializeOrg} from 'sentry-test/initializeOrg';
 
 import ProjectsStore from 'app/stores/projectsStore';
 import TransactionSummary from 'app/views/performance/transactionSummary';
@@ -218,7 +218,7 @@ describe('Performance > TransactionSummary', function () {
     expect(wrapper.find('[data-test-id="filter-transactions"]')).toHaveLength(1);
 
     // Ensure create alert from discover is hidden without metric alert
-    expect(wrapper.find('CreateAlertButton')).toHaveLength(0);
+    expect(wrapper.find('CreateAlertFromViewButton')).toHaveLength(0);
   });
 
   it('renders feature flagged UI elements', async function () {
@@ -235,7 +235,7 @@ describe('Performance > TransactionSummary', function () {
     wrapper.update();
 
     // Ensure create alert from discover is shown with metric alerts
-    expect(wrapper.find('CreateAlertButton')).toHaveLength(1);
+    expect(wrapper.find('CreateAlertFromViewButton')).toHaveLength(1);
   });
 
   it('triggers a navigation on search', async function () {
