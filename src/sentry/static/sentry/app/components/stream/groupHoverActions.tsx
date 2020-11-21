@@ -1,18 +1,18 @@
 import React from 'react';
 import styled from '@emotion/styled';
 
-import space from 'app/styles/space';
-import {t} from 'app/locale';
-import {IconIssues} from 'app/icons';
-import Tooltip from 'app/components/tooltip';
-import ActionLink from 'app/components/actions/actionLink';
 import {addLoadingMessage, clearIndicators} from 'app/actionCreators/indicator';
 import {Client} from 'app/api';
-import {GlobalSelection, Group, Project, Release} from 'app/types';
-import withApi from 'app/utils/withApi';
+import ActionLink from 'app/components/actions/actionLink';
 import IgnoreActions from 'app/components/actions/ignore';
 import ResolveActions from 'app/components/actions/resolve';
+import Tooltip from 'app/components/tooltip';
+import {IconIssues} from 'app/icons';
+import {t} from 'app/locale';
+import space from 'app/styles/space';
+import {GlobalSelection, Group, Project, Release} from 'app/types';
 import Projects from 'app/utils/projects';
+import withApi from 'app/utils/withApi';
 
 type Props = {
   api: Client;

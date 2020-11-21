@@ -5,6 +5,7 @@ import $ from 'jquery';
 // eslint-disable-next-line no-restricted-imports
 import {Box, Flex} from 'reflexbox';
 
+import Feature from 'app/components/acl/feature';
 import AssigneeSelector from 'app/components/assigneeSelector';
 import GuideAnchor from 'app/components/assistant/guideAnchor';
 import Count from 'app/components/count';
@@ -17,12 +18,11 @@ import Link from 'app/components/links/link';
 import MenuItem from 'app/components/menuItem';
 import {getRelativeSummary} from 'app/components/organizations/timeRangeSelector/utils';
 import {PanelItem} from 'app/components/panels';
-import Feature from 'app/components/acl/feature';
 import GroupChart from 'app/components/stream/groupChart';
 import GroupCheckBox from 'app/components/stream/groupCheckBox';
+import GroupHoverActions from 'app/components/stream/groupHoverActions';
 import {DEFAULT_STATS_PERIOD} from 'app/constants';
 import {t} from 'app/locale';
-import GroupHoverActions from 'app/components/stream/groupHoverActions';
 import GroupStore from 'app/stores/groupStore';
 import SelectedGroupStore from 'app/stores/selectedGroupStore';
 import space from 'app/styles/space';
