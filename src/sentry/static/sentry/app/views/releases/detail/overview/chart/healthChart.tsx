@@ -13,11 +13,8 @@ import {defined} from 'app/utils';
 import {axisDuration} from 'app/utils/discover/charts';
 import {getExactDuration} from 'app/utils/formatters';
 import {decodeList} from 'app/utils/queryString';
-<<<<<<< HEAD
-import theme from 'app/utils/theme';
-=======
 import {PlatformKey} from 'app/data/platformCategories';
->>>>>>> parent 2a30ac698d80403fdb6d9b7b4a11dd2e45e9f902
+import theme from 'app/utils/theme';
 
 import {YAxis} from './releaseChartControls';
 import {sessionTerm, getSessionTermDescription} from '../../../utils/sessionTerm';
