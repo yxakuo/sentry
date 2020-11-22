@@ -8,16 +8,17 @@ import LineChart from 'app/components/charts/lineChart';
 import StackedAreaChart from 'app/components/charts/stackedAreaChart';
 import {getSeriesSelection} from 'app/components/charts/utils';
 import {parseStatsPeriod} from 'app/components/organizations/timeRangeSelector/utils';
+import {PlatformKey} from 'app/data/platformCategories';
 import {Series} from 'app/types/echarts';
 import {defined} from 'app/utils';
 import {axisDuration} from 'app/utils/discover/charts';
 import {getExactDuration} from 'app/utils/formatters';
 import {decodeList} from 'app/utils/queryString';
-import {PlatformKey} from 'app/data/platformCategories';
 import theme from 'app/utils/theme';
 
+import {getSessionTermDescription, sessionTerm} from '../../../utils/sessionTerm';
+
 import {YAxis} from './releaseChartControls';
-import {sessionTerm, getSessionTermDescription} from '../../../utils/sessionTerm';
 
 type Props = {
   reloading: boolean;

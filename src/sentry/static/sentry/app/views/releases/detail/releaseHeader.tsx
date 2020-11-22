@@ -27,9 +27,10 @@ import {getAggregateAlias} from 'app/utils/discover/fields';
 import {formatAbbreviatedNumber, formatVersion} from 'app/utils/formatters';
 import {getTermHelp} from 'app/views/performance/data';
 
+import {getSessionTermDescription, sessionTerm} from '../utils/sessionTerm';
+
 import ReleaseActions from './releaseActions';
 import ReleaseStat from './releaseStat';
-import {getSessionTermDescription, sessionTerm} from '../utils/sessionTerm';
 
 type Props = {
   location: Location;

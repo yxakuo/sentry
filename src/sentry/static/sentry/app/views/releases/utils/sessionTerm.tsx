@@ -1,5 +1,5 @@
-import {t} from 'app/locale';
 import {PlatformKey} from 'app/data/platformCategories';
+import {t} from 'app/locale';
 
 export const sessionTerm = {
   crashes: t('Crashes'),

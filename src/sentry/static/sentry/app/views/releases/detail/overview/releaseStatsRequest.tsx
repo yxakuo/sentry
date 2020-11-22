@@ -19,9 +19,10 @@ import {defined, percent} from 'app/utils';
 import {getExactDuration} from 'app/utils/formatters';
 
 import {displayCrashFreePercent, getCrashFreePercent, roundDuration} from '../../utils';
+import {sessionTerm} from '../../utils/sessionTerm';
+
 import {YAxis} from './chart/releaseChartControls';
 import {getInterval, getReleaseEventView} from './chart/utils';
-import {sessionTerm} from '../../utils/sessionTerm';
 
 const omitIgnoredProps = (props: Props) =>
   omitBy(props, (_, key) =>
